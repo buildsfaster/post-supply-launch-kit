@@ -1,0 +1,986 @@
+<style>
+/* Layout: 1200px measure, 200px mono label column; tone bands, not boxes. One raised surface: the request card. */
+:root{
+  --ground:#F0EBE5;--band:#E7E3DA;--surface:#F8F7F3;--field:#EFEAE3;--field-focus:#FBFAF7;
+  --ink:#1C1B19;--ink-2:#4A4740;--muted:#6B665E;--hair:#DCD6CE;
+  --signal:#FF5A1F;--signal-text:#AD3D0B;--on-signal:#1C1B19;
+  --inv-ground:#1C1B19;--inv-ink:#F0EBE5;--inv-muted:#CFC8BE;
+  --ok:#1F8A4C;--ok-text:#17693A;--err:#C8352B;--err-text:#A12A22;
+  --focus:rgba(28,27,25,.45);--scrim:rgba(28,27,25,.32);
+  --shadow:0 1px 2px rgba(28,27,25,.06),0 8px 24px -12px rgba(28,27,25,.18);
+  --sans:"Geist","Noto Sans SC","Noto Sans JP",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --dur-fast:120ms;--dur-base:200ms;--dur-slow:360ms;--ease:cubic-bezier(.2,.8,.2,1);
+  --measure:1200px;--label-col:200px;--r-sm:4px;--r-md:6px;--r-lg:8px;
+  --gut-l:max(16px,env(safe-area-inset-left,0px));--gut-r:max(16px,env(safe-area-inset-right,0px));
+  color-scheme:only light;
+}
+:root[data-theme="dark"]{
+  --ground:#171716;--band:#1F1E1C;--surface:#232220;--field:#2B2A27;--field-focus:#302F2B;
+  --ink:#F0EBE5;--ink-2:#CFC8BE;--muted:#A39C92;--hair:#34322F;
+  --signal:#FF5A1F;--signal-text:#FF7A45;--on-signal:#1C1B19;
+  --inv-ground:#0F0F0E;--inv-ink:#F0EBE5;--inv-muted:#CFC8BE;
+  --ok:#3FB070;--ok-text:#62C98E;--err:#E5544A;--err-text:#F28A82;
+  --focus:rgba(240,235,229,.55);--scrim:rgba(0,0,0,.5);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.6);
+  color-scheme:only dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 17px/1.6 var(--sans);overflow-x:clip;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--ground)}
+@media(min-width:1024px){body{font-size:18px}}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:var(--r-sm)}
+.wrap{max-width:calc(var(--measure) + 96px);margin:0 auto;padding-left:var(--gut-l);padding-right:var(--gut-r)}
+@media(min-width:1024px){.wrap{padding-left:max(48px,env(safe-area-inset-left,0px));padding-right:max(48px,env(safe-area-inset-right,0px))}}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Header */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--ground);transition:box-shadow var(--dur-base) var(--ease)}
+.hdr.scrolled{box-shadow:0 1px 0 var(--hair)}
+.hdr .wrap{display:flex;align-items:center;gap:8px;height:64px;transition:height var(--dur-base) var(--ease)}
+@media(min-width:1024px){.hdr .wrap{height:76px}.hdr.scrolled .wrap{height:60px}}
+.logo{font-weight:700;font-size:22px;letter-spacing:-.035em;text-decoration:none;display:inline-flex;align-items:baseline;margin-right:auto;padding:8px 0;min-height:44px;align-items:center}
+.logo i{display:inline-block;width:.24em;height:.24em;border-radius:50%;background:var(--signal);margin:0 .02em;transform:translateY(.33em)}
+.nav{display:none;gap:4px}
+.nav a{text-decoration:none;color:var(--ink-2);padding:10px 12px;border-radius:var(--r-sm);font-size:16px;transition:color var(--dur-fast)}
+.nav a:hover{color:var(--ink)}
+@media(min-width:1024px){.nav{display:flex;margin-right:auto}}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;height:44px;padding:0 10px;border:0;background:transparent;border-radius:var(--r-sm);color:var(--ink);transition:background var(--dur-fast)}
+.icon-btn:hover{background:var(--band)}
+.icon-btn:active{transform:scale(.96)}
+.icon-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.lang-btn{font-family:var(--mono);font-size:15px;letter-spacing:.02em}
+.lang-btn svg{width:14px;height:14px;transition:transform var(--dur-base) var(--ease)}
+.lang-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+.hdr .hdr-cta{display:none;white-space:nowrap}
+@media(min-width:1024px){.hdr .hdr-cta{display:inline-flex}.menu-btn{display:none}}
+.theme-btn .sun{display:none}
+:root[data-theme="dark"] .theme-btn .sun{display:block}
+:root[data-theme="dark"] .theme-btn .moon{display:none}
+
+/* Buttons */
+.btn{position:relative;display:inline-flex;text-align:center;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 22px;border-radius:var(--r-sm);border:0;font-weight:600;font-size:17px;line-height:1;text-decoration:none;overflow:hidden;transition:transform var(--dur-fast) var(--ease),background var(--dur-base)}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--signal);color:var(--on-signal)}
+.btn-primary:hover{background:#FF6A33}
+.btn-secondary{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.btn-secondary:hover{background:var(--band)}
+.btn-block{width:100%}
+.btn-sm{height:44px;font-size:16px;padding:0 16px}
+.btn .arrow{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;transition:transform var(--dur-base) var(--ease)}
+@media(hover:hover){.btn:hover .arrow{transform:translateX(4px)}}
+.btn .load{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(28,27,25,.18);opacity:0}
+.btn .load::after{content:"";position:absolute;inset:0;width:35%;background:var(--on-signal);transform:translateX(-100%)}
+.btn.loading .load{opacity:1}
+.btn.loading .load::after{animation:run 900ms var(--ease) infinite}
+@keyframes run{to{transform:translateX(290%)}}
+
+/* Sections */
+section{padding-block:72px;border-top:1px solid var(--hair)}
+@media(min-width:1024px){section{padding-block:128px}}
+.band{background:var(--band);border-top-color:transparent}
+.sec-grid{display:grid;gap:20px}
+@media(min-width:1024px){.sec-grid{grid-template-columns:var(--label-col) 1fr;gap:48px}}
+.label{font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--signal-text);display:flex;align-items:center;gap:10px;padding-top:8px}
+.label::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--signal);flex:none}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.03em;text-wrap:balance}
+h2{font-size:clamp(36px,7vw,60px);line-height:1.06}
+.sub{color:var(--ink-2);margin:16px 0 0;max-width:60ch}
+
+/* Hero */
+.hero{border-top:0;padding-block:20px 64px}
+@media(min-width:1024px){.hero{padding-block:72px 128px}}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:32px;align-items:start}
+.hero-grid>*,.sec-grid>*,.calc>*,.why>*{min-width:0}
+@media(min-width:1024px){.hero-grid{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:64px}}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--signal)}
+.hero h1{font-size:clamp(44px,11.5vw,104px);line-height:.98;letter-spacing:-.04em;margin-top:20px}
+.hero .lead{font-size:clamp(18px,2.2vw,21px);color:var(--ink-2);margin:20px 0 0;max-width:34ch}
+@media(min-width:1024px){.hero .lead{max-width:40ch}.hero-copy{padding-top:24px}}
+.proof{display:none;flex-wrap:wrap;gap:8px 20px;margin:28px 0 0;padding:0;list-style:none;font-family:var(--mono);font-size:13px;color:var(--muted)}
+@media(min-width:1024px){.proof{display:flex}}
+.proof li{display:flex;gap:8px;align-items:center}
+.proof li::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--muted)}
+
+/* Request card */
+.card{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:24px 20px 20px;position:relative;scroll-margin-top:84px}
+@media(min-width:600px){.card{padding:32px}}
+.card-top{display:flex;align-items:center;gap:8px;min-height:44px;margin:-6px 0 6px}
+.back{display:inline-flex;align-items:center;gap:4px;height:44px;margin-left:-12px;padding:0 12px;border:0;background:none;color:var(--ink-2);font-size:15px;border-radius:var(--r-sm);opacity:0;pointer-events:none;transition:opacity var(--dur-base)}
+.back.show{opacity:1;pointer-events:auto}
+.back svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.step-label{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--muted);transition:color var(--dur-base)}
+.step-label.done{color:var(--ok-text)}
+.progress{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:24px}
+.progress span{height:4px;border-radius:2px;background:var(--hair);position:relative;overflow:hidden}
+.progress span::after{content:"";position:absolute;inset:0;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform 300ms var(--ease),background var(--dur-base)}
+.progress span.cur::after{transform:scaleX(1)}
+.progress span.ok::after{transform:scaleX(1);background:var(--ok)}
+.viewport{position:relative;transition:height 260ms var(--ease)}
+.step{display:grid;gap:20px}
+.step[hidden]{display:none!important}
+.step.out-l{animation:outL 160ms var(--ease) forwards}
+.step.out-r{animation:outR 160ms var(--ease) forwards}
+.step.in-r{animation:inR 220ms var(--ease) both}
+.step.in-l{animation:inL 220ms var(--ease) both}
+@keyframes outL{to{opacity:0;transform:translateX(-12px)}}
+@keyframes outR{to{opacity:0;transform:translateX(12px)}}
+@keyframes inR{from{opacity:0;transform:translateX(12px)}}
+@keyframes inL{from{opacity:0;transform:translateX(-12px)}}
+.step h3{font-size:24px;letter-spacing:-.02em;line-height:1.2}
+.f{display:grid;gap:8px}
+.f > label,.legend{font-weight:500;font-size:16px;color:var(--ink)}
+.legend .opt{color:var(--muted);font-weight:400}
+.ctl{position:relative;min-width:0;display:flex;align-items:center;background:var(--field);border-radius:var(--r-sm);transition:background var(--dur-base)}
+.ctl::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--ink);transform:scaleX(0);transition:transform 180ms var(--ease),background var(--dur-base)}
+.ctl:focus-within{background:var(--field-focus)}
+.ctl:focus-within::after{transform:scaleX(1)}
+.ctl.valid::after{transform:scaleX(1);background:var(--ok)}
+.ctl.invalid::after{transform:scaleX(1);background:var(--err)}
+.ctl input,.ctl select,.ctl textarea{flex:1;min-width:0;width:100%;height:56px;padding:0 16px;border:0;background:transparent;font-size:18px;border-radius:var(--r-sm);-webkit-appearance:none;appearance:none}
+.ctl input:focus-visible,.ctl select:focus-visible,.ctl textarea:focus-visible{outline:none}
+.ctl textarea{height:auto;min-height:104px;padding:14px 16px;resize:vertical;line-height:1.5}
+.ctl select{padding-right:40px;cursor:pointer}
+.ctl .chev{position:absolute;right:14px;width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:1.8;pointer-events:none}
+.ctl .tick{position:absolute;right:14px;width:18px;height:18px;opacity:0;transform:scale(.6);transition:opacity 160ms,transform 160ms var(--ease)}
+.ctl .tick circle{fill:var(--ok)}.ctl .tick path{stroke:#fff;stroke-width:2;fill:none}
+.ctl.valid .tick{opacity:1;transform:none}
+.ctl.shake{animation:shake 220ms var(--ease)}
+@keyframes shake{25%{transform:translateX(4px)}50%{transform:translateX(-4px)}75%{transform:translateX(3px)}}
+.phone-row{display:grid;grid-template-columns:112px minmax(0,1fr);gap:8px}
+.err{color:var(--err-text);font-size:15px;display:flex;gap:6px;align-items:center;animation:errIn 200ms var(--ease)}
+.err svg{width:16px;height:16px;flex:none;stroke:var(--err);fill:none;stroke-width:2}
+@keyframes errIn{from{opacity:0;transform:translateY(-4px)}}
+.consent{display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;cursor:pointer;padding:6px 0;font-size:15px;line-height:1.5;color:var(--ink-2)}
+.consent input{position:absolute;opacity:0;width:24px;height:24px;margin:0}
+.box{width:24px;height:24px;border-radius:6px;background:var(--field);box-shadow:inset 0 0 0 1.5px var(--muted);position:relative;overflow:hidden;transition:box-shadow var(--dur-base)}
+.box::before{content:"";position:absolute;inset:0;background:var(--signal);clip-path:inset(0 100% 0 0);transition:clip-path 180ms var(--ease)}
+.box svg{position:absolute;inset:3px;stroke:var(--on-signal);stroke-width:2.4;fill:none;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset 180ms 80ms var(--ease)}
+.consent input:checked + .box{box-shadow:none}
+.consent input:checked + .box::before{clip-path:inset(0)}
+.consent input:checked + .box svg{stroke-dashoffset:0}
+.consent input:focus-visible + .box{outline:2px solid var(--focus);outline-offset:3px}
+.consent.invalid .box{box-shadow:inset 0 0 0 1.5px var(--err)}
+.fine{font-size:15px;color:var(--muted);text-align:center;margin:0}
+.fine a,.copy-mail{color:var(--ink-2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--hair)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:0;margin:0}
+.chip{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:22px;border:0;background:var(--field);color:var(--ink);font-size:16px;transition:background var(--dur-base),color var(--dur-base),transform 80ms var(--ease)}
+.chip:active{transform:scale(.97)}
+.chip svg{width:0;height:16px;stroke:var(--on-signal);stroke-width:2.4;fill:none;stroke-dasharray:20;stroke-dashoffset:20;transition:width 160ms var(--ease),stroke-dashoffset 160ms 60ms var(--ease)}
+.chip[aria-pressed="true"],.chip[aria-checked="true"]{background:var(--signal);color:var(--on-signal)}
+.chip[aria-pressed="true"] svg,.chip[aria-checked="true"] svg{width:16px;stroke-dashoffset:0}
+.chips.invalid .chip{box-shadow:inset 0 0 0 1.5px var(--err)}
+.disclose{justify-self:start;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0;border:0;background:none;color:var(--ink-2);font-size:16px;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--hair)}
+.disclose svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;transition:transform var(--dur-base) var(--ease)}
+.disclose[aria-expanded="true"] svg{transform:rotate(45deg)}
+.file{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border-radius:var(--r-sm);background:var(--field);color:var(--ink-2);font-size:15px;cursor:pointer}
+.file input{position:absolute;opacity:0;width:1px;height:1px}
+.file svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
+.file:focus-within{outline:2px solid var(--focus);outline-offset:3px}
+
+/* Success */
+.success{display:grid;gap:20px}
+.success:focus{outline:none}
+.mark{width:48px;height:48px}
+.mark circle{fill:var(--ok);transform-origin:center;animation:pop 220ms var(--ease) both}
+.mark path{stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30;animation:draw 360ms 180ms var(--ease) forwards}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.success h3{font-size:28px;letter-spacing:-.025em;line-height:1.15}
+.success p{margin:0;color:var(--ink-2)}
+.summary{display:grid;margin:0}
+.summary div{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--hair);font-size:15px}
+.summary dt{color:var(--muted)}
+.summary dd{margin:0;font-family:var(--mono);font-size:14px;word-break:break-word}
+.next{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:15px;color:var(--ink-2)}
+.next li{display:flex;gap:12px}
+.next b{font-family:var(--mono);font-weight:400;color:var(--signal-text)}
+.actions{display:grid;gap:8px}
+.small{font-size:14px;color:var(--muted);margin:0}
+
+/* How it works */
+.steps3{list-style:none;margin:40px 0 0;padding:0;display:grid;gap:28px;position:relative}
+@media(min-width:900px){.steps3{grid-template-columns:repeat(3,1fr);gap:40px;padding-top:28px}
+.steps3::before,.steps3::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--hair)}
+.steps3::after{background:var(--signal);transform:scaleX(0);transform-origin:left;transition:transform 1200ms var(--ease)}
+.steps3.drawn::after{transform:scaleX(1)}}
+.steps3 li{display:grid;gap:8px}
+.num{font-family:var(--mono);font-size:13px;color:var(--signal-text)}
+.steps3 h3{font-size:24px;letter-spacing:-.02em;line-height:1.25}
+.steps3 p{margin:0;color:var(--ink-2)}
+
+/* Products */
+.rows{list-style:none;margin:40px 0 0;padding:0;border-bottom:1px solid var(--hair)}
+.row{display:grid;grid-template-columns:36px 1fr;gap:4px 12px;padding:24px 0;border-top:1px solid var(--hair);position:relative;transition:background var(--dur-base)}
+@media(min-width:900px){.row{grid-template-columns:56px 1fr 1.4fr auto;align-items:center;gap:24px;padding:28px 16px;margin:0 -16px;border-radius:var(--r-md)}
+.row:hover{background:color-mix(in srgb,var(--ground) 60%,var(--surface))}}
+.row .num{padding-top:6px}
+.row h3{font-size:24px;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.row h3::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--signal);transform:scale(0);transition:transform var(--dur-base) var(--ease)}
+.row.sel h3::after{transform:scale(1)}
+.row p{margin:0;color:var(--ink-2);grid-column:2}
+@media(min-width:900px){.row p{grid-column:auto}}
+.row .chip{grid-column:2;justify-self:start;margin-top:12px}
+@media(min-width:900px){.row .chip{grid-column:auto;margin:0}}
+.band .chip:not([aria-pressed="true"]){background:var(--surface)}
+
+/* Why */
+.why{display:grid;gap:40px;margin-top:40px}
+@media(min-width:900px){.why{grid-template-columns:1fr 1fr;gap:64px}}
+.statement{font-size:clamp(26px,3.6vw,40px);line-height:1.2;font-weight:500;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.ruled{list-style:none;margin:0;padding:0}
+.ruled li{display:grid;grid-template-columns:36px 1fr;gap:12px;padding:16px 0;border-top:1px solid var(--hair);color:var(--ink-2)}
+.ruled li:first-child{border-top:0;padding-top:0}
+
+/* Calculator band */
+
+/* Closing */
+.closing{background:var(--inv-ground);color:var(--inv-ink);border-top:0}
+.closing .label{color:#FF7A45}
+.closing h2{font-size:clamp(40px,8vw,84px);color:var(--inv-ink)}
+.closing .sub{color:var(--inv-muted)}
+.closing .btn{margin-top:32px}
+
+/* Footer */
+footer{padding-block:48px calc(48px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--hair)}
+.foot{display:grid;gap:12px;font-size:15px;color:var(--muted)}
+@media(min-width:900px){.foot{grid-template-columns:auto 1fr auto;align-items:center;gap:32px}}
+.foot .logo{font-size:20px;color:var(--ink);margin:0}
+.ref-note{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:24px}
+
+/* Mobile sticky CTA */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:12px var(--gut-r) calc(12px + env(safe-area-inset-bottom,0px)) var(--gut-l);background:var(--ground);box-shadow:0 -1px 0 var(--hair);transform:translateY(110%);transition:transform 260ms var(--ease)}
+.dock.show{transform:none}
+@media(min-width:1024px){.dock{display:none}}
+
+/* Sheets and menus */
+.scrim{position:fixed;inset:0;z-index:70;background:var(--scrim);opacity:0;transition:opacity var(--dur-base)}
+.scrim.show{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:80;background:var(--surface);border-radius:12px 12px 0 0;padding:8px var(--gut-r) calc(16px + env(safe-area-inset-bottom,0px)) var(--gut-l);transform:translateY(100%);transition:transform 280ms var(--ease);max-height:88dvh;overflow:auto;touch-action:pan-y}
+.sheet.show{transform:none}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--hair);margin:4px auto 12px}
+.sheet h2{font-size:15px;font-family:var(--mono);font-weight:400;letter-spacing:.04em;color:var(--muted);margin:0 0 8px}
+.opt-list{list-style:none;margin:0;padding:0}
+.opt-list button,.opt-list a{display:flex;align-items:center;width:100%;min-height:56px;padding:0 4px;border:0;border-top:1px solid var(--hair);background:none;text-align:left;font-size:18px;text-decoration:none;gap:12px}
+.opt-list li:first-child > *{border-top:0}
+.opt-list .code{margin-left:auto;font-family:var(--mono);font-size:14px;color:var(--muted)}
+.opt-list .chk{width:20px;height:20px;flex:none;stroke:var(--signal-text);fill:none;stroke-width:2;opacity:0}
+.opt-list [aria-current="true"] .chk{opacity:1}
+.opt-list [aria-current="true"]{font-weight:600}
+.sheet .btn{margin-top:16px}
+.sheet .row-ctl{display:flex;justify-content:space-between;align-items:center;min-height:56px;border-top:1px solid var(--hair);font-size:18px}
+@media(min-width:1024px){
+  .sheet.lang{left:auto;right:auto;bottom:auto;top:0;width:280px;border-radius:var(--r-lg);box-shadow:var(--shadow);padding:8px 16px;transform:translateY(-6px);opacity:0;pointer-events:none;transition:transform 180ms var(--ease),opacity 180ms}
+  .sheet.lang.show{transform:none;opacity:1;pointer-events:auto}
+  .sheet.lang .grab,.sheet.lang h2{display:none}
+  .scrim.light{background:transparent}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important;transition-delay:0ms!important}
+  html{scroll-behavior:auto}
+}
+
+html.theme-fade body,html.theme-fade .hdr,html.theme-fade section,html.theme-fade .card{transition:background-color 600ms var(--ease),color 600ms var(--ease)}
+html:not(.kbd) :focus-visible{outline:none!important}
+html:not(.kbd) .consent input:focus-visible + .box{outline:none}
+.legal{margin:-8px 0 0 36px;font-size:13px;line-height:1.5;color:var(--muted)}
+.legal a{color:var(--ink-2);text-decoration:underline;text-underline-offset:3px}
+
+/* DDP preview card: the app itself, small */
+.sec-grid{align-items:start}
+.ddp-teaser{display:grid;grid-template-columns:minmax(0,1fr);gap:32px;align-items:start}
+.ddp-teaser>*{min-width:0}
+.mr label{min-width:0}.msel select{max-width:100%}
+@media(min-width:900px){.ddp-teaser{grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:64px}}
+.ddp-points{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:14px}
+.ddp-points li{display:grid;gap:2px;padding-left:20px;position:relative}
+.ddp-points li::before{content:"";position:absolute;left:0;top:.6em;width:8px;height:8px;border-radius:50%;background:var(--signal)}
+.ddp-points b{font-weight:600}
+.ddp-points span{color:var(--ink-2)}
+.ddp-card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:16px}
+.ddp-card-hd{display:flex;align-items:center;gap:10px;margin:2px 2px 14px}
+.ddp-card-hd .ic{width:32px;height:32px;border-radius:8px;background:var(--ink);display:grid;place-items:center}
+.ddp-card-hd .ic i{width:10px;height:10px;border-radius:50%;background:var(--signal)}
+.ddp-card-hd b{display:block;font-size:16px}.ddp-card-hd small{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.mgroup{border-radius:var(--r-lg);box-shadow:0 0 0 1px var(--hair);overflow:hidden;background:var(--surface)}
+.mr{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 14px}
+.mr + .mr{border-top:1px solid var(--hair)}
+.mr label{flex:1;font-size:16px}
+.msel{position:relative}.msel select{appearance:none;-webkit-appearance:none;border:0;background:transparent;font:16px var(--sans);color:var(--ink-2);padding:0 22px 0 0;height:44px;text-align:right;text-align-last:right;cursor:pointer}
+.msel svg{position:absolute;right:0;top:14px;width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;pointer-events:none}
+.mval{display:flex;align-items:center;gap:2px;height:44px;padding:0 12px;border-radius:var(--r-sm);background:var(--field);font-family:var(--mono);font-size:18px}
+.mval span{color:var(--muted)}.mval input{width:6ch;border:0;background:transparent;font:inherit;text-align:right;color:var(--ink);caret-color:var(--signal)}
+.mval input:focus{outline:none}.mval:focus-within{box-shadow:inset 0 0 0 1.5px var(--ink);background:var(--field-focus)}
+.m-k{margin:18px 2px 0;font-size:14px;color:var(--muted)}
+.m-big{margin:2px 2px 0;display:flex;align-items:baseline;gap:10px;font-family:var(--mono);font-size:48px;line-height:1.05;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.delta{font-family:var(--mono);font-size:13px;letter-spacing:0;padding:3px 8px;border-radius:12px;opacity:0;transform:translateY(4px);transition:opacity 200ms,transform 200ms var(--ease)}
+.delta.show{opacity:1;transform:none}.delta.down{color:var(--ok-text);background:color-mix(in srgb,var(--ok) 14%,transparent)}.delta.up{color:var(--ink-2);background:var(--field)}
+.ddp-card .bar{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden;margin:14px 2px 6px;background:var(--hair)}
+.ddp-card .bar i{display:block;flex:0 0 auto;transition:flex-grow 400ms var(--ease)}
+.s-g{background:var(--ink)}.s-f{background:var(--ink-2)}.s-d{background:var(--signal)}.s-l{background:var(--muted)}.s-t{background:var(--hair);background-image:repeating-linear-gradient(135deg,var(--muted) 0 1px,transparent 1px 5px)}
+.m-lines{list-style:none;margin:6px 2px 0;padding:0}
+.m-lines li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--hair);font-size:15px;color:var(--ink-2)}
+.m-lines li span:last-child{font-family:var(--mono);color:var(--ink)}
+.m-note{margin:10px 2px 14px;font-size:13px;line-height:1.45;color:var(--muted)}
+
+.queued{margin:0;padding:12px 14px;border-radius:var(--r-sm);background:var(--field);font-size:15px;color:var(--ink-2)}
+#sendErr .err a{color:var(--err-text);font-weight:600}
+</style>
+
+<header class="hdr" id="hdr">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="post.supply">post<i></i>supply</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#how" data-t="nav.how"></a>
+      <a href="#products" data-t="nav.products"></a>
+      <a href="#why" data-t="nav.why"></a>
+      <a href="#cost" data-t="nav.calc"></a>
+    </nav>
+    <a class="btn btn-primary btn-sm hdr-cta" href="#request" data-go="request"><span data-t="cta"></span></a>
+    <button class="icon-btn lang-btn" id="langBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="langSheet"><span id="langCode">EN</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="icon-btn menu-btn" id="menuBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="menuSheet"><span class="sr" data-t="menu"></span><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
+    <button class="icon-btn theme-btn" id="themeBtn" aria-pressed="false"><span class="sr" data-t="theme"></span><svg class="moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow" data-t="eyebrow"></p>
+        <h1 data-t="h1"></h1>
+        <p class="lead" data-t="lead"></p>
+        <ul class="proof"><li data-t="proof1"></li><li data-t="proof2"></li><li data-t="proof3"></li></ul>
+      </div>
+
+      <form class="card" id="request" novalidate aria-labelledby="stepLabel">
+        <div class="card-top">
+          <button type="button" class="back" id="backBtn"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span data-t="back"></span></button>
+          <span class="step-label" id="stepLabel" aria-live="polite"></span>
+        </div>
+        <div class="progress" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="viewport" id="vp">
+
+          <div class="step" data-step="1">
+            <div class="f">
+              <label for="phone" data-t="phone"></label>
+              <div class="phone-row">
+                <div class="ctl">
+                  <label class="sr" for="cc" data-t="cc"></label>
+                  <select id="cc" autocomplete="tel-country-code"></select>
+                  <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="ctl" id="phoneCtl">
+                  <input id="phone" type="tel" inputmode="tel" autocomplete="tel-national" aria-describedby="phoneErr">
+                  <svg class="tick" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9"/><path d="M5 9.2l2.6 2.6L13 6.5"/></svg>
+                </div>
+              </div>
+              <div id="phoneErr"></div>
+            </div>
+            <label class="consent" id="consentRow">
+              <input type="checkbox" id="consent" aria-describedby="consentErr">
+              <span class="box"><svg viewBox="0 0 18 18"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg></span>
+              <span data-t="consent"></span>
+            </label>
+            <p class="legal" id="legal"></p>
+            <div id="consentErr"></div>
+            <button type="submit" class="btn btn-primary btn-block"><span data-t="cta"></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="load"></span></button>
+            <p class="fine"><span data-t="free"></span><br><span data-t="orEmail"></span> <a href="mailto:sales@post.supply">sales@post.supply</a></p>
+          </div>
+
+          <div class="step" data-step="2" hidden>
+            <h3 data-t="s2"></h3>
+            <div class="f">
+              <label for="first" data-t="first"></label>
+              <div class="ctl"><input id="first" autocomplete="given-name" aria-describedby="firstErr"><svg class="tick" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9"/><path d="M5 9.2l2.6 2.6L13 6.5"/></svg></div>
+              <div id="firstErr"></div>
+            </div>
+            <div class="f">
+              <label for="company" data-t="company"></label>
+              <div class="ctl"><input id="company" autocomplete="organization" aria-describedby="companyErr"><svg class="tick" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9"/><path d="M5 9.2l2.6 2.6L13 6.5"/></svg></div>
+              <div id="companyErr"></div>
+            </div>
+            <div class="f">
+              <span class="legend" id="typeLbl" data-t="youAre"></span>
+              <div class="chips" id="typeChips" role="radiogroup" aria-labelledby="typeLbl"></div>
+              <div id="typeErr"></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block"><span data-t="continue"></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="load"></span></button>
+          </div>
+
+          <div class="step" data-step="3" hidden>
+            <h3 data-t="s3"></h3>
+            <div class="f">
+              <span class="legend" id="prodLbl" data-t="products"></span>
+              <div class="chips" id="prodChips" role="group" aria-labelledby="prodLbl"></div>
+              <div id="prodErr"></div>
+            </div>
+            <div class="f">
+              <label for="dest" data-t="dest"></label>
+              <div class="ctl"><select id="dest" autocomplete="country-name"></select><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+            </div>
+            <div class="f" id="otherWrap" hidden>
+              <label for="other" data-t="otherCountry"></label>
+              <div class="ctl"><input id="other" autocomplete="country-name" aria-describedby="otherErr"></div>
+              <div id="otherErr"></div>
+            </div>
+            <div class="f">
+              <span class="legend" id="volLbl"><span data-t="volume"></span> <span class="opt" data-t="optional"></span></span>
+              <div class="chips" id="volChips" role="radiogroup" aria-labelledby="volLbl"></div>
+            </div>
+            <button type="button" class="disclose" id="moreBtn" aria-expanded="false" aria-controls="moreWrap"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span data-t="addDetails"></span></button>
+            <div class="f" id="moreWrap" hidden>
+              <label for="details" data-t="detailsLbl"></label>
+              <div class="ctl"><textarea id="details" rows="3"></textarea></div>
+              <label class="file"><svg viewBox="0 0 24 24"><path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7L10.2 18.7a1.7 1.7 0 0 1-2.4-2.4L15.5 8.6"/></svg><span id="fileName" data-t="attach"></span><input type="file" id="files" multiple accept="image/*,.pdf,.xlsx,.xls,.csv,.doc,.docx"></label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block"><span data-t="cta"></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="load"></span></button>
+            <div id="sendErr"></div>
+          </div>
+
+          <div class="step success" data-step="4" hidden tabindex="-1" role="status" aria-live="polite" id="success">
+            <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24"/><path d="M14 24.5l7 7L34 18"/></svg>
+            <h3 data-t="okH"></h3>
+            <p data-t="okP"></p>
+            <dl class="summary" id="summary"></dl>
+            <ol class="next"><li><b>01</b><span data-t="n1"></span></li><li><b>02</b><span data-t="n2"></span></li><li><b>03</b><span data-t="n3"></span></li></ol>
+            <div class="actions">
+              <a class="btn btn-secondary btn-block" id="mailAct" href="mailto:sales@post.supply"><span data-t="actFiles"></span></a>
+              <a class="btn btn-secondary btn-block" href="#cost" data-t="actCost"></a>
+            </div>
+            <p class="queued" id="queuedNote" hidden data-t="queued"></p>
+            <p class="small" data-t="smallprint"></p>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap sec-grid">
+      <p class="label" data-t="l.how"></p>
+      <div>
+        <h2 data-t="howH"></h2>
+        <ol class="steps3" id="steps3">
+          <li><span class="num">01</span><h3 data-t="h1t"></h3><p data-t="h1p"></p></li>
+          <li><span class="num">02</span><h3 data-t="h2t"></h3><p data-t="h2p"></p></li>
+          <li><span class="num">03</span><h3 data-t="h3t"></h3><p data-t="h3p"></p></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="products" class="band">
+    <div class="wrap sec-grid">
+      <p class="label" data-t="l.products"></p>
+      <div>
+        <h2 data-t="prodH"></h2>
+        <p class="sub" data-t="prodSub"></p>
+        <ul class="rows" id="rows"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="why">
+    <div class="wrap sec-grid">
+      <p class="label" data-t="l.why"></p>
+      <div>
+        <h2 data-t="whyH"></h2>
+        <div class="why">
+          <p class="statement" data-t="statement"></p>
+          <ol class="ruled" id="whyList"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cost" class="band">
+    <div class="wrap sec-grid">
+      <p class="label" data-t="l.cost"></p>
+      <div class="ddp-teaser">
+        <div class="ddp-copy">
+          <h2 data-t="costH"></h2>
+          <p class="sub" data-t="ddpSub"></p>
+          <ul class="ddp-points">
+            <li><b data-t="ddpP1"></b><span data-t="ddpP1s"></span></li>
+            <li><b data-t="ddpP2"></b><span data-t="ddpP2s"></span></li>
+            <li><b data-t="ddpP3"></b><span data-t="ddpP3s"></span></li>
+          </ul>
+        </div>
+        <div class="ddp-card" aria-live="polite">
+          <div class="ddp-card-hd"><span class="ic"><i></i></span><span><b>DDP</b><small>ddp.post.supply</small></span></div>
+          <div class="mgroup">
+            <div class="mr"><label for="mDest" data-t="dest"></label><span class="msel"><select id="mDest"></select><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span></div>
+            <div class="mr"><label for="mProd" data-t="prod"></label><span class="msel"><select id="mProd"></select><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span></div>
+            <div class="mr"><label for="mFob" id="mFobLbl"></label><span class="mval"><span>$</span><input id="mFob" inputmode="decimal" value="10" autocomplete="off"></span></div>
+          </div>
+          <p class="m-k" id="mPerLbl"></p>
+          <p class="m-big"><span id="mPer"></span><span class="delta" id="mDelta" aria-hidden="true"></span></p>
+          <div class="bar" aria-hidden="true"><i class="s-g"></i><i class="s-f"></i><i class="s-d"></i><i class="s-l"></i><i class="s-t"></i></div>
+          <ul class="m-lines" id="mLines"></ul>
+          <p class="m-note" data-t="ddpNote"></p>
+          <a class="btn btn-primary btn-block" id="mOpen" href="https://ddp.post.supply/"><span data-t="ddpOpen"></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing" id="start">
+    <div class="wrap sec-grid">
+      <p class="label" data-t="l.start"></p>
+      <div>
+        <h2 data-t="startH"></h2>
+        <p class="sub" data-t="startP"></p>
+        <a class="btn btn-primary" href="#request" data-go="request"><span data-t="cta"></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <a class="logo" href="#top" aria-label="post.supply">post<i></i>supply</a>
+      <span data-t="tagline"></span>
+      <span><a class="copy-mail" href="mailto:sales@post.supply">sales@post.supply</a> · © 2026 post.supply</span>
+    </div>
+  </div>
+</footer>
+
+<div class="dock" id="dock"><a class="btn btn-primary btn-block" href="#request" data-go="request"><span data-t="cta"></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet lang" id="langSheet" role="dialog" aria-modal="true" aria-labelledby="langTitle" hidden>
+  <div class="grab"></div>
+  <h2 id="langTitle" data-t="langTitle"></h2>
+  <ul class="opt-list" id="langList"></ul>
+</div>
+<div class="sheet" id="menuSheet" role="dialog" aria-modal="true" aria-labelledby="menuTitle" hidden>
+  <div class="grab"></div>
+  <h2 id="menuTitle" data-t="menu"></h2>
+  <ul class="opt-list">
+    <li><a href="#how" data-close data-t="nav.how"></a></li>
+    <li><a href="#products" data-close data-t="nav.products"></a></li>
+    <li><a href="#why" data-close data-t="nav.why"></a></li>
+    <li><a href="#cost" data-close data-t="nav.calc"></a></li>
+  </ul>
+  <a class="btn btn-primary btn-block" href="#request" data-go="request" data-close><span data-t="cta"></span></a>
+</div>
+
+<script>
+(function(){
+"use strict";
+var LANGS=[["en","English","EN"],["es","Español","ES"],["pt","Português","PT"],["zh","中文","ZH"],["ja","日本語","JA"]];
+var T={
+en:{"nav.how":"How it works","nav.products":"Products","nav.why":"Why post.supply","nav.calc":"Calculator",cta:"Get prices",menu:"Menu",theme:"Switch day or night",langTitle:"Language",
+eyebrow:"Caribbean & the Americas · Wholesale · FOB & CIF",h1:"Wholesale building materials.",lead:"For hardware stores, distributors, and volume buyers. We quote FOB or CIF with clear per-piece costs, so you can add your own and know your margin before you buy.",
+proof1:"Free to quote",proof2:"No account",proof3:"A person reviews every quote",
+step:"Step {n} of 3",sent:"Sent",back:"Back",phone:"Your mobile number",cc:"Country code",consent:"post.supply may call or text me, including on WhatsApp, about this request. Not for marketing.",free:"Free. No account. No obligation.",orEmail:"or email your order to",
+errPhone:"Check the number. It looks too short.",errConsent:"Tick the box so we can reach you.",errReq:"Fill this in.",errPick:"Choose one.",errPickMany:"Choose at least one.",
+s2:"Who's buying?",first:"First name",company:"Company",youAre:"You are a",types:["Hardware store","Distributor","Importer","Other"],"continue":"Continue",
+s3:"What do you need?",products:"Products",prods:["PVC panels","Plywood","Treated pine posts","Interior doors","Something else"],dest:"Destination",dests:["Puerto Rico","Dominican Republic","Jamaica","United States","Other country"],otherCountry:"Which country?",volume:"Volume",optional:"(optional)",vols:["Full container","Less than a container","Not sure yet"],addDetails:"Add details or files",detailsLbl:"Details: sizes, quantities, whatever you have",attach:"Attach photo, PDF or spreadsheet",files:"{n} file(s) attached",
+okH:"We have your request.",okP:"A person on our team will review it and reach you by the channels you allowed.",sum:["Name","Company","Products","Destination","Phone","Reference"],n1:"Review",n2:"FOB or CIF prices by piece",n3:"You approve",actFiles:"Add files or details",actCost:"Estimate landed cost",smallprint:"Not a quote or order confirmation.",
+"l.how":"01 · How",howH:"How it works",h1t:"Send your order",h1p:"Products, quantities, and destination port. Photo, PDF, spreadsheet, or a message, however you have it.",h2t:"We review it",h2p:"The team reviews your request and prepares FOB or CIF prices by piece.",h3t:"Approve and we ship",h3p:"We coordinate the shipment. You handle customs and final delivery, with clear numbers from the start.",
+"l.products":"02 · Products",prodH:"What we quote",prodSub:"Choose a category to add it to your request.",add:"Add",added:"Added",pd:["Prefinished wall and ceiling panels for interiors. Moisture resistant.","Structural and finish grades from the US, Brazil, Chile, China and Indonesia.","Postes Naturales with a natural taper, or Perfectos Redondos at a constant diameter.","Interior doors by the container."],
+"l.why":"03 · Why",whyH:"Why post.supply",statement:"If we can't beat or match your current price, we'll tell you straight. Quoting costs you nothing.",why:["Wholesale pricing by the container or volume.","Clear per-piece cost. Add your duties, local freight, and handling, and know your landed cost before you approve.","FOB or CIF, however you buy.","We source what you don't have in stock, so you don't lose the sale.","A person reviews every quote before it goes out, with experience moving containers across the Americas."],
+"l.cost":"04 · Cost",costH:"Know your landed cost before you buy.",costSub:"Illustrative starting values. Adjust them for your shipment.",goods:"Goods value, FOB",goodsS:"Goods",freight:"Freight",qty:"Quantity",unit:"Unit",units:["Sheets","Pieces","Doors"],per:["Estimated cost per sheet","Estimated cost per piece","Estimated cost per door"],duty:"Duty rate",dutyS:"Import duty",ins:"Insurance (1%)",tax:"Tax",taxNote:"Tax and duty rates are starting values. Confirm them with your customs broker.",total:"Landed total",calcCta:"Get prices for this shipment",
+"l.start":"05 · Start",startH:"Got an order to fill?",startP:"Leave your number to request prices.",tagline:"Wholesale building materials · FOB & CIF"},
+es:{"nav.how":"Cómo funciona","nav.products":"Productos","nav.why":"Por qué post.supply","nav.calc":"Calculadora",cta:"Pedir precios",menu:"Menú",theme:"Cambiar a día o noche",langTitle:"Idioma",
+eyebrow:"Caribe y las Américas · Al por mayor · FOB y CIF",h1:"Materiales de construcción al por mayor.",lead:"Para ferreterías, distribuidores y compradores por volumen. Cotizamos FOB o CIF con costo claro por pieza, para que sumes tus costos y conozcas tu margen antes de comprar.",
+proof1:"Cotizar es gratis",proof2:"Sin cuenta",proof3:"Una persona revisa cada cotización",
+step:"Paso {n} de 3",sent:"Enviado",back:"Atrás",phone:"Tu número de celular",cc:"Código de país",consent:"post.supply puede llamarme o escribirme, también por WhatsApp, sobre esta solicitud. No es publicidad.",free:"Gratis. Sin cuenta. Sin compromiso.",orEmail:"o envía tu orden a",
+errPhone:"Revisa el número. Parece incompleto.",errConsent:"Marca la casilla para que podamos contactarte.",errReq:"Completa este campo.",errPick:"Elige una opción.",errPickMany:"Elige al menos uno.",
+s2:"¿Quién compra?",first:"Nombre",company:"Empresa",youAre:"Eres",types:["Ferretería","Distribuidor","Importador","Otro"],"continue":"Continuar",
+s3:"¿Qué necesitas?",products:"Productos",prods:["Paneles de PVC","Plywood","Postes de pino tratado","Puertas interiores","Otro"],dest:"Destino",dests:["Puerto Rico","República Dominicana","Jamaica","Estados Unidos","Otro país"],otherCountry:"¿Qué país?",volume:"Volumen",optional:"(opcional)",vols:["Contenedor completo","Menos de un contenedor","Aún no sé"],addDetails:"Añadir detalles o archivos",detailsLbl:"Detalles: medidas, cantidades, lo que tengas",attach:"Adjuntar foto, PDF u hoja de cálculo",files:"{n} archivo(s) adjunto(s)",
+okH:"Recibimos tu solicitud.",okP:"Una persona del equipo la revisará y te contactará por los medios que autorizaste.",sum:["Nombre","Empresa","Productos","Destino","Teléfono","Referencia"],n1:"Revisión",n2:"Precios FOB o CIF por pieza",n3:"Tú apruebas",actFiles:"Añadir archivos o detalles",actCost:"Calcular costo puesto en destino",smallprint:"No es una cotización ni confirmación de orden.",
+"l.how":"01 · Cómo",howH:"Cómo funciona",h1t:"Envía tu orden",h1p:"Productos, cantidades y puerto de destino. Foto, PDF, hoja de cálculo o mensaje, como lo tengas.",h2t:"La revisamos",h2p:"El equipo revisa tu solicitud y prepara precios FOB o CIF por pieza.",h3t:"Apruebas y enviamos",h3p:"Coordinamos el embarque. Tú manejas la aduana y la entrega final, con números claros desde el principio.",
+"l.products":"02 · Productos",prodH:"Lo que cotizamos",prodSub:"Elige una categoría para añadirla a tu solicitud.",add:"Añadir",added:"Añadido",pd:["Paneles con acabado de fábrica para paredes y techos interiores. Resistentes a la humedad.","Grados estructurales y de terminación desde EE. UU., Brasil, Chile, China e Indonesia.","Postes Naturales con su conicidad natural, o Perfectos Redondos de diámetro constante.","Puertas interiores por contenedor."],
+"l.why":"03 · Por qué",whyH:"Por qué post.supply",statement:"Si no podemos igualar o mejorar tu precio actual, te lo decimos claro. Cotizar no te cuesta nada.",why:["Precios al por mayor por contenedor o volumen.","Costo claro por pieza. Suma tus aranceles, flete local y manejo, y conoce tu costo puesto en destino antes de aprobar.","FOB o CIF, como compres.","Conseguimos lo que no tienes en inventario, para que no pierdas la venta.","Una persona revisa cada cotización antes de enviarla, con experiencia moviendo contenedores por las Américas."],
+"l.cost":"04 · Costo",costH:"Conoce tu costo puesto en destino antes de comprar.",costSub:"Valores ilustrativos. Ajústalos a tu embarque.",goods:"Valor de la mercancía, FOB",goodsS:"Mercancía",freight:"Flete",qty:"Cantidad",unit:"Unidad",units:["Planchas","Piezas","Puertas"],per:["Costo estimado por plancha","Costo estimado por pieza","Costo estimado por puerta"],duty:"Arancel",dutyS:"Arancel",ins:"Seguro (1%)",tax:"Impuesto",taxNote:"Los porcentajes de arancel e impuesto son valores iniciales. Confírmalos con tu agente de aduanas.",total:"Total puesto en destino",calcCta:"Pedir precios para este embarque",
+"l.start":"05 · Empezar",startH:"¿Tienes una orden que llenar?",startP:"Deja tu número para pedir precios.",tagline:"Materiales de construcción al por mayor · FOB y CIF"},
+pt:{"nav.how":"Como funciona","nav.products":"Produtos","nav.why":"Por que post.supply","nav.calc":"Calculadora",cta:"Pedir preços",menu:"Menu",theme:"Mudar para dia ou noite",langTitle:"Idioma",
+eyebrow:"Caribe e Américas · Atacado · FOB e CIF",h1:"Materiais de construção no atacado.",lead:"Para lojas de materiais, distribuidores e compradores de volume. Cotamos FOB ou CIF com custo claro por peça, para você somar seus custos e saber sua margem antes de comprar.",
+proof1:"Cotação grátis",proof2:"Sem cadastro",proof3:"Uma pessoa revisa cada cotação",
+step:"Etapa {n} de 3",sent:"Enviado",back:"Voltar",phone:"Seu celular",cc:"Código do país",consent:"A post.supply pode me ligar ou enviar mensagem, inclusive no WhatsApp, sobre este pedido. Não é marketing.",free:"Grátis. Sem cadastro. Sem compromisso.",orEmail:"ou envie seu pedido para",
+errPhone:"Confira o número. Parece incompleto.",errConsent:"Marque a caixa para podermos falar com você.",errReq:"Preencha este campo.",errPick:"Escolha uma opção.",errPickMany:"Escolha pelo menos um.",
+s2:"Quem está comprando?",first:"Nome",company:"Empresa",youAre:"Você é",types:["Loja de materiais","Distribuidor","Importador","Outro"],"continue":"Continuar",
+s3:"Do que você precisa?",products:"Produtos",prods:["Painéis de PVC","Compensado","Postes de pinus tratado","Portas internas","Outro"],dest:"Destino",dests:["Porto Rico","República Dominicana","Jamaica","Estados Unidos","Outro país"],otherCountry:"Qual país?",volume:"Volume",optional:"(opcional)",vols:["Contêiner completo","Menos de um contêiner","Ainda não sei"],addDetails:"Adicionar detalhes ou arquivos",detailsLbl:"Detalhes: medidas, quantidades, o que tiver",attach:"Anexar foto, PDF ou planilha",files:"{n} arquivo(s) anexado(s)",
+okH:"Recebemos seu pedido.",okP:"Uma pessoa da equipe vai analisar e falar com você pelos canais que você autorizou.",sum:["Nome","Empresa","Produtos","Destino","Telefone","Referência"],n1:"Análise",n2:"Preços FOB ou CIF por peça",n3:"Você aprova",actFiles:"Adicionar arquivos ou detalhes",actCost:"Calcular custo no destino",smallprint:"Não é cotação nem confirmação de pedido.",
+"l.how":"01 · Como",howH:"Como funciona",h1t:"Envie seu pedido",h1p:"Produtos, quantidades e porto de destino. Foto, PDF, planilha ou mensagem, do jeito que estiver.",h2t:"Nós analisamos",h2p:"A equipe analisa seu pedido e prepara preços FOB ou CIF por peça.",h3t:"Você aprova e embarcamos",h3p:"Coordenamos o embarque. Você cuida da alfândega e da entrega final, com números claros desde o início.",
+"l.products":"02 · Produtos",prodH:"O que cotamos",prodSub:"Escolha uma categoria para adicioná-la ao seu pedido.",add:"Adicionar",added:"Adicionado",pd:["Painéis com acabamento de fábrica para paredes e tetos internos. Resistentes à umidade.","Graus estruturais e de acabamento dos EUA, Brasil, Chile, China e Indonésia.","Postes Naturales com conicidade natural, ou Perfectos Redondos de diâmetro constante.","Portas internas por contêiner."],
+"l.why":"03 · Por quê",whyH:"Por que post.supply",statement:"Se não conseguirmos igualar ou melhorar seu preço atual, dizemos com franqueza. Cotar não custa nada.",why:["Preços de atacado por contêiner ou volume.","Custo claro por peça. Some seus impostos de importação, frete local e manuseio, e saiba seu custo no destino antes de aprovar.","FOB ou CIF, como você compra.","Buscamos o que você não tem em estoque, para você não perder a venda.","Uma pessoa revisa cada cotação antes do envio, com experiência movendo contêineres pelas Américas."],
+"l.cost":"04 · Custo",costH:"Saiba seu custo no destino antes de comprar.",costSub:"Valores ilustrativos. Ajuste para o seu embarque.",goods:"Valor da mercadoria, FOB",goodsS:"Mercadoria",freight:"Frete",qty:"Quantidade",unit:"Unidade",units:["Chapas","Peças","Portas"],per:["Custo estimado por chapa","Custo estimado por peça","Custo estimado por porta"],duty:"Imposto de importação",dutyS:"Imposto de importação",ins:"Seguro (1%)",tax:"Imposto",taxNote:"As alíquotas são valores iniciais. Confirme com seu despachante aduaneiro.",total:"Custo total no destino",calcCta:"Pedir preços para este embarque",
+"l.start":"05 · Começar",startH:"Tem um pedido para fechar?",startP:"Deixe seu número para pedir preços.",tagline:"Materiais de construção no atacado · FOB e CIF"},
+zh:{"nav.how":"流程","nav.products":"产品","nav.why":"为什么选择 post.supply","nav.calc":"计算器",cta:"获取报价",menu:"菜单",theme:"切换日间或夜间",langTitle:"语言",
+eyebrow:"加勒比与美洲 · 批发 · FOB 与 CIF",h1:"建材批发。",lead:"面向五金店、经销商和大宗采购商。我们提供 FOB 或 CIF 报价，按件列明成本，方便您加上自己的费用，下单前就清楚利润。",
+proof1:"免费报价",proof2:"无需注册",proof3:"每份报价均经人工审核",
+step:"第 {n} 步，共 3 步",sent:"已发送",back:"返回",phone:"您的手机号码",cc:"国家代码",consent:"同意 post.supply 就此询价通过电话、短信或 WhatsApp 联系我。不用于营销。",free:"免费。无需注册。没有义务。",orEmail:"或将订单发送至",
+errPhone:"请检查号码，似乎不完整。",errConsent:"请勾选此项，以便我们联系您。",errReq:"请填写此项。",errPick:"请选择一项。",errPickMany:"请至少选择一项。",
+s2:"采购方是谁？",first:"名字",company:"公司",youAre:"您是",types:["五金店","经销商","进口商","其他"],"continue":"继续",
+s3:"您需要什么？",products:"产品",prods:["PVC 墙板","胶合板","防腐松木柱","室内门","其他"],dest:"目的地",dests:["波多黎各","多米尼加共和国","牙买加","美国","其他国家"],otherCountry:"哪个国家？",volume:"数量",optional:"（可选）",vols:["整柜","不足一柜","还不确定"],addDetails:"添加详情或文件",detailsLbl:"详情：尺寸、数量，现有信息即可",attach:"附上照片、PDF 或表格",files:"已附 {n} 个文件",
+okH:"我们已收到您的询价。",okP:"团队成员会进行审核，并通过您允许的方式联系您。",sum:["姓名","公司","产品","目的地","电话","编号"],n1:"审核",n2:"按件 FOB 或 CIF 价格",n3:"由您确认",actFiles:"添加文件或详情",actCost:"估算到岸成本",smallprint:"这不是报价，也不是订单确认。",
+"l.how":"01 · 流程",howH:"流程",h1t:"发送订单",h1p:"产品、数量和目的港。照片、PDF、表格或消息都可以。",h2t:"我们审核",h2p:"团队审核您的询价，并按件准备 FOB 或 CIF 价格。",h3t:"您确认，我们发货",h3p:"我们协调运输。清关和最终配送由您负责，数字从一开始就清清楚楚。",
+"l.products":"02 · 产品",prodH:"报价产品",prodSub:"选择类别，加入您的询价。",add:"加入",added:"已加入",pd:["用于室内墙面和天花板的预饰面板，防潮。","结构级和饰面级，产自美国、巴西、智利、中国和印度尼西亚。","Postes Naturales 保留天然锥度，Perfectos Redondos 直径一致。","室内门，整柜供应。"],
+"l.why":"03 · 优势",whyH:"为什么选择 post.supply",statement:"如果我们无法持平或低于您现在的价格，会直接告诉您。询价不收任何费用。",why:["按整柜或批量的批发价格。","按件列明成本。加上关税、本地运费和装卸费，批准前就知道到岸成本。","FOB 或 CIF，按您的采购方式。","您缺货的产品，我们来采购，不让您丢单。","每份报价发出前都经人工审核，团队有在美洲各地运输集装箱的经验。"],
+"l.cost":"04 · 成本",costH:"下单前就知道到岸成本。",costSub:"示例起始数值，请按您的货物调整。",goods:"货值，FOB",goodsS:"货值",freight:"运费",qty:"数量",unit:"单位",units:["张","件","扇"],per:["每张预估成本","每件预估成本","每扇预估成本"],duty:"关税税率",dutyS:"进口关税",ins:"保险（1%）",tax:"税",taxNote:"税率仅为起始数值，请向您的报关行确认。",total:"到岸总成本",calcCta:"为这批货获取报价",
+"l.start":"05 · 开始",startH:"有订单要采购？",startP:"留下号码即可获取报价。",tagline:"建材批发 · FOB 与 CIF"},
+ja:{"nav.how":"流れ","nav.products":"製品","nav.why":"選ばれる理由","nav.calc":"計算ツール",cta:"価格を問い合わせる",menu:"メニュー",theme:"昼・夜を切り替え",langTitle:"言語",
+eyebrow:"カリブ海・南北アメリカ · 卸売 · FOB・CIF",h1:"建築資材の卸売。",lead:"金物店、販売代理店、大口購入者の方へ。FOB または CIF で、1 点あたりのコストを明確にお見積もりします。ご自身の費用を加えて、購入前に利益を把握できます。",
+proof1:"見積もり無料",proof2:"登録不要",proof3:"すべての見積もりを担当者が確認",
+step:"ステップ {n} / 3",sent:"送信済み",back:"戻る",phone:"携帯電話番号",cc:"国番号",consent:"このお問い合わせについて、post.supply から電話、SMS、WhatsApp で連絡を受けることに同意します。広告には使用しません。",free:"無料。登録不要。義務なし。",orEmail:"またはご注文を次のアドレスへ",
+errPhone:"番号をご確認ください。桁が足りないようです。",errConsent:"ご連絡のため、チェックを入れてください。",errReq:"入力してください。",errPick:"1 つ選んでください。",errPickMany:"1 つ以上選んでください。",
+s2:"ご購入者について",first:"名",company:"会社名",youAre:"業種",types:["金物店","販売代理店","輸入業者","その他"],"continue":"次へ",
+s3:"必要なもの",products:"製品",prods:["PVC パネル","合板","防腐処理松ポール","室内ドア","その他"],dest:"仕向地",dests:["プエルトリコ","ドミニカ共和国","ジャマイカ","アメリカ合衆国","その他の国"],otherCountry:"国名",volume:"数量",optional:"（任意）",vols:["フルコンテナ","コンテナ未満","まだ未定"],addDetails:"詳細やファイルを追加",detailsLbl:"詳細：寸法、数量など、お手元の情報で構いません",attach:"写真、PDF、スプレッドシートを添付",files:"{n} 件のファイルを添付",
+okH:"お問い合わせを受け付けました。",okP:"担当者が内容を確認し、許可いただいた方法でご連絡します。",sum:["お名前","会社名","製品","仕向地","電話","受付番号"],n1:"確認",n2:"1 点ごとの FOB・CIF 価格",n3:"ご承認",actFiles:"ファイルや詳細を追加",actCost:"到着時コストを試算",smallprint:"見積もりや注文確定ではありません。",
+"l.how":"01 · 流れ",howH:"ご利用の流れ",h1t:"ご注文を送る",h1p:"製品、数量、仕向港。写真、PDF、スプレッドシート、メッセージなど、お手元の形式で。",h2t:"内容を確認",h2p:"チームが内容を確認し、1 点ごとの FOB または CIF 価格を用意します。",h3t:"ご承認後に出荷",h3p:"輸送を手配します。通関と最終配送はお客様が行い、最初から数字は明確です。",
+"l.products":"02 · 製品",prodH:"お見積もり製品",prodSub:"カテゴリを選んでお問い合わせに追加できます。",add:"追加",added:"追加済み",pd:["室内の壁・天井用の化粧済みパネル。耐湿性。","米国、ブラジル、チリ、中国、インドネシア産の構造用・仕上げ用グレード。","自然なテーパーの Postes Naturales、または径が一定の Perfectos Redondos。","室内ドアをコンテナ単位で。"],
+"l.why":"03 · 理由",whyH:"post.supply が選ばれる理由",statement:"現在の価格と同等以下にできない場合は、率直にお伝えします。見積もりは無料です。",why:["コンテナ単位・数量単位の卸売価格。","1 点ごとの明確なコスト。関税、国内輸送、荷役費を加えて、承認前に到着時コストがわかります。","FOB でも CIF でも、ご希望の条件で。","在庫にないものも調達し、販売機会を逃しません。","すべての見積もりは送付前に担当者が確認します。南北アメリカでのコンテナ輸送の経験があります。"],
+"l.cost":"04 · コスト",costH:"購入前に到着時コストを把握。",costSub:"参考の初期値です。貨物に合わせて調整してください。",goods:"商品価格（FOB）",goodsS:"商品",freight:"運賃",qty:"数量",unit:"単位",units:["枚","個","ドア"],per:["1 枚あたりの推定コスト","1 個あたりの推定コスト","ドア 1 枚あたりの推定コスト"],duty:"関税率",dutyS:"輸入関税",ins:"保険（1%）",tax:"税",taxNote:"税率は初期値です。通関業者にご確認ください。",total:"到着時コスト合計",calcCta:"この貨物の価格を問い合わせる",
+"l.start":"05 · 開始",startH:"埋めるべき注文がありますか？",startP:"番号を残して価格をお問い合わせください。",tagline:"建築資材の卸売 · FOB・CIF"}
+};
+
+var T2={
+en:{costH:"Know your delivered cost before you buy.",costSub:"We quote FOB or CIF per piece. Add your destination costs and see your DDP cost per unit, delivered and duty paid, then price it. Your numbers stay on this device.",
+grpQuote:"From your post.supply quote",grpDest:"At destination",grpMargin:"Compare and price",unitsCont:"Units per container",conts:"Containers",frCont:"Freight per container",insRate:"Insurance rate",fobU:"FOB price per {u}",
+dutyBasis:"Duty applies to",taxBasis:"Tax applies to",cifDuty:"CIF + duty",feesS:"Customs fees",feeUS:"MPF 0.3464% (min $34.58, max $670.86) plus HMF 0.125%, on FOB value. {v}",feeJM:"Standard compliance fee 0.3% plus environmental levy 0.5%, on CIF value. {v}",feeNone:"None added automatically. Put any your broker lists under other charges.",
+resell:"I resell these goods. Import tax is credited back, so it is cash at import, not cost.",brokerL:"Customs broker, per shipment",portL:"Port and terminal, per container",inlandL:"Inland trucking, per container",otherL:"Other charges, per shipment",
+brokerS:"Customs broker",portS:"Port and terminal",inlandS:"Inland trucking",otherS:"Other charges",cur:"What you pay now per {u}, delivered",sell:"Your selling price per {u}",target:"Target margin",
+perH:"DDP cost per {u}",totH:"Shipment total, {n} container(s)",insS:"Insurance",cif:"CIF value",ddp:"DDP cost",cash:"Cash needed at import",credit:"credited back",
+saveL:"You save per {u}",saveShip:"{v} per shipment",moreL:"Costs more per {u}",marginAt:"Margin at your price",sugL:"Price for {p}% margin",
+lg:["Goods","Freight and insurance","Duty and fees","Destination costs","Tax"],copy:"Copy breakdown",copied:"Copied",reset:"Reset to starting values",salesTax:"Sales tax",
+taxNote:"Starting values are illustrative. Duty depends on product and origin. Confirm duty, fees and tax with your customs broker, and port and trucking with your providers.",actCost:"Estimate your delivered cost",unitOne:["sheet","piece","door"],
+waHead:"post.supply DDP estimate"},
+es:{costH:"Conoce tu costo final entregado antes de comprar.",costSub:"Cotizamos FOB o CIF por pieza. Añade tus costos en destino, ve tu costo DDP por unidad, entregado y con impuestos pagados, y ponle precio. Tus números se quedan en este dispositivo.",
+grpQuote:"De tu cotización de post.supply",grpDest:"En destino",grpMargin:"Compara y pon precio",unitsCont:"Unidades por contenedor",conts:"Contenedores",frCont:"Flete por contenedor",insRate:"Tasa de seguro",fobU:"Precio FOB por {u}",
+dutyBasis:"El arancel aplica a",taxBasis:"El impuesto aplica a",cifDuty:"CIF + arancel",feesS:"Cargos de aduana",feeUS:"MPF 0.3464% (mín. $34.58, máx. $670.86) más HMF 0.125%, sobre valor FOB. {v}",feeJM:"Cargo de cumplimiento 0.3% más impuesto ambiental 0.5%, sobre valor CIF. {v}",feeNone:"No se añade ninguno. Pon los que liste tu agente en otros cargos.",
+resell:"Revendo esta mercancía. El impuesto de importación se acredita, así que es efectivo al importar, no costo.",brokerL:"Agente de aduanas, por embarque",portL:"Puerto y terminal, por contenedor",inlandL:"Acarreo terrestre, por contenedor",otherL:"Otros cargos, por embarque",
+brokerS:"Agente de aduanas",portS:"Puerto y terminal",inlandS:"Acarreo terrestre",otherS:"Otros cargos",cur:"Lo que pagas hoy por {u}, entregado",sell:"Tu precio de venta por {u}",target:"Margen deseado",
+perH:"Costo DDP por {u}",totH:"Total del embarque, {n} contenedor(es)",insS:"Seguro",cif:"Valor CIF",ddp:"Costo DDP",cash:"Efectivo necesario al importar",credit:"se acredita",
+saveL:"Ahorras por {u}",saveShip:"{v} por embarque",moreL:"Cuesta más por {u}",marginAt:"Margen a tu precio",sugL:"Precio para {p}% de margen",
+lg:["Mercancía","Flete y seguro","Arancel y cargos","Costos en destino","Impuesto"],copy:"Copiar desglose",copied:"Copiado",reset:"Volver a valores iniciales",salesTax:"Impuesto sobre ventas",
+taxNote:"Los valores iniciales son ilustrativos. El arancel depende del producto y del origen. Confirma arancel, cargos e impuestos con tu agente de aduanas, y puerto y acarreo con tus proveedores.",actCost:"Calcular tu costo entregado",unitOne:["plancha","pieza","puerta"],
+waHead:"Estimado DDP de post.supply"},
+pt:{costH:"Saiba seu custo final entregue antes de comprar.",costSub:"Cotamos FOB ou CIF por peça. Some seus custos no destino, veja o custo DDP por unidade, entregue com impostos pagos, e defina seu preço. Seus números ficam neste aparelho.",
+grpQuote:"Da sua cotação post.supply",grpDest:"No destino",grpMargin:"Compare e precifique",unitsCont:"Unidades por contêiner",conts:"Contêineres",frCont:"Frete por contêiner",insRate:"Taxa de seguro",fobU:"Preço FOB por {u}",
+dutyBasis:"Imposto de importação sobre",taxBasis:"Imposto sobre",cifDuty:"CIF + imposto",feesS:"Taxas aduaneiras",feeUS:"MPF 0,3464% (mín. $34.58, máx. $670.86) mais HMF 0,125%, sobre valor FOB. {v}",feeJM:"Taxa de conformidade 0,3% mais taxa ambiental 0,5%, sobre valor CIF. {v}",feeNone:"Nenhuma adicionada. Coloque as que seu despachante listar em outras taxas.",
+resell:"Revendo estes produtos. O imposto de importação é creditado, então é caixa na importação, não custo.",brokerL:"Despachante, por embarque",portL:"Porto e terminal, por contêiner",inlandL:"Frete rodoviário, por contêiner",otherL:"Outras taxas, por embarque",
+brokerS:"Despachante",portS:"Porto e terminal",inlandS:"Frete rodoviário",otherS:"Outras taxas",cur:"Quanto você paga hoje por {u}, entregue",sell:"Seu preço de venda por {u}",target:"Margem desejada",
+perH:"Custo DDP por {u}",totH:"Total do embarque, {n} contêiner(es)",insS:"Seguro",cif:"Valor CIF",ddp:"Custo DDP",cash:"Caixa necessário na importação",credit:"creditado",
+saveL:"Você economiza por {u}",saveShip:"{v} por embarque",moreL:"Custa mais por {u}",marginAt:"Margem no seu preço",sugL:"Preço para {p}% de margem",
+lg:["Mercadoria","Frete e seguro","Impostos e taxas","Custos no destino","Imposto"],copy:"Copiar detalhamento",copied:"Copiado",reset:"Voltar aos valores iniciais",salesTax:"Imposto sobre vendas",
+taxNote:"Os valores iniciais são ilustrativos. O imposto de importação depende do produto e da origem. Confirme com seu despachante, e porto e frete com seus fornecedores.",actCost:"Calcular seu custo entregue",unitOne:["chapa","peça","porta"],
+waHead:"Estimativa DDP post.supply"},
+zh:{costH:"下单前就知道送达总成本。",costSub:"我们按件报 FOB 或 CIF 价。加上目的地费用，即可看到每单位 DDP 成本（完税后送达）并据此定价。数据只保存在本设备上。",
+grpQuote:"来自 post.supply 报价",grpDest:"目的地费用",grpMargin:"比较与定价",unitsCont:"每柜数量",conts:"柜数",frCont:"每柜运费",insRate:"保险费率",fobU:"每{u} FOB 价",
+dutyBasis:"关税计税基础",taxBasis:"税的计税基础",cifDuty:"CIF + 关税",feesS:"海关规费",feeUS:"MPF 0.3464%（最低 $34.58，最高 $670.86）加 HMF 0.125%，按 FOB 价。{v}",feeJM:"合规费 0.3% 加环境税 0.5%，按 CIF 价。{v}",feeNone:"未自动添加。报关行列出的费用请填入其他费用。",
+resell:"我转售这些货物。进口税可抵扣，因此是进口时的现金支出，而非成本。",brokerL:"报关行费用（每批）",portL:"港口及码头费（每柜）",inlandL:"内陆运输（每柜）",otherL:"其他费用（每批）",
+brokerS:"报关行费用",portS:"港口及码头费",inlandS:"内陆运输",otherS:"其他费用",cur:"您目前每{u}的送达价",sell:"您的每{u}售价",target:"目标利润率",
+perH:"每{u} DDP 成本",totH:"整批合计，{n} 柜",insS:"保险",cif:"CIF 货值",ddp:"DDP 成本",cash:"进口时所需现金",credit:"可抵扣",
+saveL:"每{u}节省",saveShip:"每批 {v}",moreL:"每{u}多花",marginAt:"按您售价的利润",sugL:"{p}% 利润率的售价",
+lg:["货值","运费和保险","关税和规费","目的地费用","税"],copy:"复制明细",copied:"已复制",reset:"恢复起始数值",salesTax:"销售税",
+taxNote:"起始数值仅作示例。关税取决于产品和原产地。关税、规费和税请向报关行确认，港口和运输费用请向服务商确认。",actCost:"估算送达成本",unitOne:["张","件","扇"],
+waHead:"post.supply DDP 估算"},
+ja:{costH:"購入前に配送までの総コストを把握。",costSub:"当社は 1 点ごとに FOB または CIF でお見積もりします。仕向地の費用を加えると、1 単位あたりの DDP コスト（関税込み・配送済み）がわかり、価格設定までできます。数値はこの端末にのみ保存されます。",
+grpQuote:"post.supply の見積もりから",grpDest:"仕向地での費用",grpMargin:"比較と価格設定",unitsCont:"1 コンテナあたりの数量",conts:"コンテナ数",frCont:"1 コンテナあたりの運賃",insRate:"保険料率",fobU:"1 {u}あたりの FOB 価格",
+dutyBasis:"関税の課税基準",taxBasis:"税の課税基準",cifDuty:"CIF + 関税",feesS:"税関手数料",feeUS:"MPF 0.3464%（最低 $34.58、最高 $670.86）と HMF 0.125%、FOB 価格に対して。{v}",feeJM:"適合手数料 0.3% と環境課徴金 0.5%、CIF 価格に対して。{v}",feeNone:"自動では加算しません。通関業者が示す費用はその他費用に入力してください。",
+resell:"この商品は転売用です。輸入税は控除されるため、コストではなく輸入時の資金です。",brokerL:"通関業者（1 回の出荷ごと）",portL:"港湾・ターミナル（1 コンテナごと）",inlandL:"国内陸送（1 コンテナごと）",otherL:"その他費用（1 回の出荷ごと）",
+brokerS:"通関業者",portS:"港湾・ターミナル",inlandS:"国内陸送",otherS:"その他費用",cur:"現在の 1 {u}あたりの納入価格",sell:"1 {u}あたりの販売価格",target:"目標利益率",
+perH:"1 {u}あたりの DDP コスト",totH:"出荷合計（{n} コンテナ）",insS:"保険",cif:"CIF 価格",ddp:"DDP コスト",cash:"輸入時に必要な資金",credit:"控除対象",
+saveL:"1 {u}あたりの節約",saveShip:"1 回の出荷で {v}",moreL:"1 {u}あたりの増加",marginAt:"販売価格での利益",sugL:"利益率 {p}% の価格",
+lg:["商品","運賃・保険","関税・手数料","仕向地費用","税"],copy:"内訳をコピー",copied:"コピーしました",reset:"初期値に戻す",salesTax:"売上税",
+taxNote:"初期値は参考です。関税は製品と原産地によって異なります。関税・手数料・税は通関業者に、港湾・陸送費は各業者にご確認ください。",actCost:"配送までのコストを試算",unitOne:["枚","個","枚"],
+waHead:"post.supply DDP 試算"}};
+for(var _l in T2)for(var _k in T2[_l])T[_l][_k]=T2[_l][_k];
+var T6={
+en:{legal:"Message and data rates may apply. Reply STOP to opt out at any time, HELP for help. See our {p}.",privacy:"privacy policy",prod:"Product",ratesChecked:"Rates and fees last checked {d}."},
+es:{legal:"Pueden aplicar cargos por mensajes y datos. Responde STOP para dejar de recibir mensajes en cualquier momento, HELP para ayuda. Lee nuestra {p}.",privacy:"política de privacidad",prod:"Producto",ratesChecked:"Tasas y cargos revisados en {d}."},
+pt:{legal:"Podem ser cobradas tarifas de mensagens e dados. Responda STOP para cancelar a qualquer momento, HELP para ajuda. Veja nossa {p}.",privacy:"política de privacidade",prod:"Produto",ratesChecked:"Taxas revisadas em {d}."},
+zh:{legal:"可能产生短信和流量费用。随时回复 STOP 退订，回复 HELP 获取帮助。请参阅我们的{p}。",privacy:"隐私政策",prod:"产品",ratesChecked:"费率最后核对于 {d}。"},
+ja:{legal:"メッセージ・通信料がかかる場合があります。STOP と返信すればいつでも停止、HELP でヘルプ。{p}をご確認ください。",privacy:"プライバシーポリシー",prod:"製品",ratesChecked:"料率と手数料の最終確認：{d}。"}};
+for(var _l6 in T6)for(var _k6 in T6[_l6])T[_l6][_k6]=T6[_l6][_k6];
+var PRIVACY_URL="https://post.supply/privacy";
+function legalHTML(){return t("legal").replace("{p}",'<a href="'+PRIVACY_URL+'" target="_blank" rel="noopener">'+t("privacy")+'</a>')}
+function legalText(){return t("legal").replace("{p}",t("privacy")+" ("+PRIVACY_URL+")")}
+var T11={
+en:{"nav.calc":"DDP calculator",prod:"Product",costH:"Know your landed cost before you buy.",ddpSub:"Our quotes are FOB or CIF. The free DDP calculator adds duty, fees, tax, port and trucking, and shows what each piece costs you delivered.",ddpP1:"Cost per piece, not just per container.",ddpP1s:"The number you price with.",ddpP2:"Share it in one tap.",ddpP2s:"WhatsApp, text or a link that reopens your numbers.",ddpP3:"Keep it on your phone.",ddpP3s:"Add it to your home screen. It remembers your last shipment.",landedPer:"Estimated landed cost per {u}",ddpNote:"Typical 1-container assumptions. Change freight, duty, broker, port and trucking in the full calculator.",ddpOpen:"Open the DDP calculator",actCost:"Estimate your landed cost"},
+es:{"nav.calc":"Calculadora DDP",prod:"Producto",costH:"Conoce tu costo puesto en destino antes de comprar.",ddpSub:"Cotizamos FOB o CIF. La calculadora DDP gratuita suma arancel, cargos, impuestos, puerto y acarreo, y te muestra lo que te cuesta cada pieza entregada.",ddpP1:"Costo por pieza, no solo por contenedor.",ddpP1s:"El número con el que pones precio.",ddpP2:"Compártelo con un toque.",ddpP2s:"WhatsApp, texto o un enlace que reabre tus números.",ddpP3:"Tenla en tu teléfono.",ddpP3s:"Añádela a tu pantalla de inicio. Recuerda tu último embarque.",landedPer:"Costo estimado puesto en destino por {u}",ddpNote:"Supuestos típicos de 1 contenedor. Cambia flete, arancel, agente, puerto y acarreo en la calculadora completa.",ddpOpen:"Abrir la calculadora DDP",actCost:"Calcular tu costo puesto en destino"},
+pt:{"nav.calc":"Calculadora DDP",prod:"Produto",costH:"Saiba seu custo no destino antes de comprar.",ddpSub:"Cotamos FOB ou CIF. A calculadora DDP gratuita soma impostos, taxas, porto e frete, e mostra quanto cada peça custa entregue.",ddpP1:"Custo por peça, não só por contêiner.",ddpP1s:"O número que você usa para precificar.",ddpP2:"Compartilhe com um toque.",ddpP2s:"WhatsApp, mensagem ou um link que reabre seus números.",ddpP3:"Tenha no seu celular.",ddpP3s:"Adicione à tela inicial. Ela lembra seu último embarque.",landedPer:"Custo estimado no destino por {u}",ddpNote:"Premissas típicas de 1 contêiner. Ajuste frete, impostos, despachante, porto e transporte na calculadora completa.",ddpOpen:"Abrir a calculadora DDP",actCost:"Calcular seu custo no destino"},
+zh:{"nav.calc":"DDP 计算器",prod:"产品",costH:"下单前就知道到岸成本。",ddpSub:"我们报 FOB 或 CIF 价。免费的 DDP 计算器会加上关税、规费、税、港口和运输费用，显示每件送达的成本。",ddpP1:"按件计算，而不只是按柜。",ddpP1s:"直接用于定价的数字。",ddpP2:"一键分享。",ddpP2s:"WhatsApp、短信，或可重新打开数字的链接。",ddpP3:"放在手机上。",ddpP3s:"添加到主屏幕，记住您上一批货。",landedPer:"每{u}预估到岸成本",ddpNote:"按常见的 1 柜假设计算。运费、关税、报关、港口和运输可在完整计算器中修改。",ddpOpen:"打开 DDP 计算器",actCost:"估算到岸成本"},
+ja:{"nav.calc":"DDP 計算ツール",prod:"製品",costH:"購入前に到着時コストを把握。",ddpSub:"当社の見積もりは FOB または CIF です。無料の DDP 計算ツールが関税・手数料・税・港湾・陸送費を加え、配送済みの 1 点あたりコストを表示します。",ddpP1:"コンテナ単位ではなく 1 点あたり。",ddpP1s:"価格設定にそのまま使える数字。",ddpP2:"ワンタップで共有。",ddpP2s:"WhatsApp、SMS、数値を再現できるリンク。",ddpP3:"スマホに置いておける。",ddpP3s:"ホーム画面に追加でき、前回の出荷を記憶します。",landedPer:"1 {u}あたりの推定到着時コスト",ddpNote:"1 コンテナの一般的な前提で計算。運賃・関税・通関・港湾・陸送は計算ツール本体で変更できます。",ddpOpen:"DDP 計算ツールを開く",actCost:"到着時コストを試算"}};
+for(var _l11 in T11)for(var _k11 in T11[_l11])T[_l11][_k11]=T11[_l11][_k11];
+var T12={en:{unitOne:["sheet","piece","door","unit"]},es:{unitOne:["plancha","pieza","puerta","unidad"]},pt:{unitOne:["chapa","peça","porta","unidade"]},zh:{unitOne:["张","件","扇","件"]},ja:{unitOne:["枚","個","枚","個"]}};
+for(var _l12 in T12)for(var _k12 in T12[_l12])T[_l12][_k12]=T12[_l12][_k12];
+var T5={
+en:{sendErr:"We couldn't send it. Check your connection and try again, or",emailIt:"email it instead",queued:"You're offline. Your request is saved on this phone and sends when you're back online."},
+es:{sendErr:"No pudimos enviarla. Revisa tu conexión e inténtalo de nuevo, o",emailIt:"envíala por email",queued:"Estás sin conexión. Tu solicitud se guardó en este teléfono y se envía cuando vuelvas a tener señal."},
+pt:{sendErr:"Não conseguimos enviar. Verifique sua conexão e tente de novo, ou",emailIt:"envie por e-mail",queued:"Você está offline. Seu pedido ficou salvo neste celular e será enviado quando a conexão voltar."},
+zh:{sendErr:"发送失败。请检查网络后重试，或",emailIt:"改用邮件发送",queued:"您当前离线。询价已保存在本机，恢复网络后会自动发送。"},
+ja:{sendErr:"送信できませんでした。接続を確認して再度お試しいただくか、",emailIt:"メールで送信してください",queued:"オフラインです。お問い合わせはこの端末に保存され、接続が戻ると送信されます。"}};
+for(var _l5 in T5)for(var _k5 in T5[_l5])T[_l5][_k5]=T5[_l5][_k5];
+var PROD_KEYS=["pvc-panel","plywood","treated-pine-posts","interior-doors","other"];
+var DEST=[{k:"PR",tax:"IVU",rate:10.5,basis:"FOB",tb:"FOB",fee:"US"},{k:"DO",tax:"ITBIS",rate:18,basis:"CIF",tb:"CIFD",fee:"none"},{k:"JM",tax:"GCT",rate:15,basis:"CIF",tb:"CIFD",fee:"JM"},{k:"US",tax:"salesTax",rate:0,basis:"FOB",tb:"FOB",fee:"US"},{k:"XX",tax:null,rate:0,basis:"CIF",tb:"CIFD",fee:"none"}];
+var CC=[["PR","+1"],["US","+1"],["DO","+1"],["JM","+1"],["MX","+52"],["CO","+57"],["PA","+507"],["CR","+506"],["BR","+55"],["CL","+56"],["ES","+34"],["CN","+86"],["JP","+81"]];
+var ES_REGIONS=/^(PR|DO|MX|CO|PA|CR|GT|HN|SV|NI|VE|EC|PE|BO|CL|AR|UY|PY|CU|ES)$/;
+
+function store(kind){try{return kind==="s"?window.sessionStorage:window.localStorage}catch(e){return null}}
+function get(kind,k){try{var s=store(kind);return s?s.getItem(k):null}catch(e){return null}}
+function set(kind,k,v){try{var s=store(kind);if(s)s.setItem(k,v)}catch(e){}}
+var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var reduced=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function buzz(){try{if(navigator.vibrate)navigator.vibrate(8)}catch(e){}}
+var navLang=(navigator.language||"en-US"),region=(navLang.split("-")[1]||"").toUpperCase();
+
+/* State */
+var S={step:1,cc:"",phone:"",consent:false,first:"",company:"",type:-1,prods:[],dest:"",other:"",vol:-1,details:"",ref:""};
+try{var saved=JSON.parse(get("s","ps.req")||"null");if(saved)for(var k in saved)S[k]=saved[k]}catch(e){}
+function save(){set("s","ps.req",JSON.stringify(S))}
+var lang=get("l","ps.lang");
+if(!lang){var base=navLang.slice(0,2).toLowerCase();lang=(base==="es"||ES_REGIONS.test(region))?"es":(T[base]?base:"en")}
+function t(k){var v=T[lang][k];return v===undefined?T.en[k]:v}
+
+/* Theme: light unless the reader opted in */
+var root=document.documentElement;
+function applyTheme(d){if(d)root.setAttribute("data-theme","dark");else root.setAttribute("data-theme","light");$("#themeBtn").setAttribute("aria-pressed",d?"true":"false")}
+/* Day 6:30 to 18:30 local, night otherwise. The toggle overrides until the next switch. */
+var DAY_START=390,DAY_END=1110;
+function minsNow(){var d=new Date();return d.getHours()*60+d.getMinutes()}
+function isNight(){var m=minsNow();return m<DAY_START||m>=DAY_END}
+function nextSwitch(){var d=new Date(),m=minsNow(),n=new Date(d);if(m<DAY_START)n.setHours(6,30,0,0);else if(m<DAY_END)n.setHours(18,30,0,0);else{n.setDate(n.getDate()+1);n.setHours(6,30,0,0)}return n.getTime()}
+function themeNow(){var o=null;try{o=JSON.parse(get("l","ps.themeOverride")||"null")}catch(e){}if(o&&o.until>Date.now())return !!o.dark;return isNight()}
+applyTheme(themeNow());
+setInterval(function(){var d=themeNow();if(d!==(root.getAttribute("data-theme")==="dark")){root.classList.add("theme-fade");applyTheme(d);setTimeout(function(){root.classList.remove("theme-fade")},700)}},60000);
+$("#themeBtn").addEventListener("click",function(){var d=root.getAttribute("data-theme")!=="dark";root.classList.add("theme-fade");applyTheme(d);set("l","ps.themeOverride",JSON.stringify({dark:d,until:nextSwitch()}));buzz();setTimeout(function(){root.classList.remove("theme-fade")},700)});
+/* Focus rings only for keyboard users */
+document.addEventListener("keydown",function(e){if(e.key==="Tab")root.classList.add("kbd")});
+document.addEventListener("pointerdown",function(){root.classList.remove("kbd")},true);
+
+/* i18n render */
+function render(){
+  root.lang=lang==="zh"?"zh-Hans":lang;
+  if((lang==="zh"||lang==="ja")&&!$("#cjk")){var l=document.createElement("link");l.id="cjk";l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&display=swap";document.head.appendChild(l)}
+  $$("[data-t]").forEach(function(el){el.textContent=t(el.getAttribute("data-t"))});
+  if($("#legal"))$("#legal").innerHTML=legalHTML();
+  $("#langCode").textContent=lang.toUpperCase();
+  $("#langBtn").setAttribute("aria-label",t("langTitle")+": "+LANGS.filter(function(x){return x[0]===lang})[0][1]);
+  // lang list
+  $("#langList").innerHTML=LANGS.map(function(x){return '<li><button type="button" lang="'+x[0]+'" data-lang="'+x[0]+'" aria-current="'+(x[0]===lang)+'"><svg class="chk" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'+x[1]+'<span class="code">'+x[2]+'</span></button></li>'}).join("");
+  // country codes
+  var cc=$("#cc");cc.innerHTML=CC.map(function(c){return '<option value="'+c[0]+'">'+c[1]+' '+c[0]+'</option>'}).join("");
+  if(!S.cc){S.cc=CC.some(function(c){return c[0]===region})?region:(lang==="es"?"PR":"US")}
+  cc.value=S.cc;
+  // chips
+  chipGroup("#typeChips",t("types"),"radio",function(i){return S.type===i});
+  chipGroup("#prodChips",t("prods"),"multi",function(i){return S.prods.indexOf(PROD_KEYS[i])>-1});
+  chipGroup("#volChips",t("vols"),"radio",function(i){return S.vol===i});
+  // destinations
+  var dn=t("dests");
+  ["#dest"].forEach(function(id){$(id).innerHTML=DEST.map(function(d,i){return '<option value="'+d.k+'">'+dn[i]+'</option>'}).join("")});
+  if(!S.dest){S.dest=DEST.some(function(d){return d.k===region})?region:"PR"}
+  $("#dest").value=S.dest;$("#otherWrap").hidden=S.dest!=="XX";
+  // products rows
+  var names=t("prods"),pd=t("pd");
+  $("#rows").innerHTML=pd.map(function(p,i){var on=S.prods.indexOf(PROD_KEYS[i])>-1;return '<li class="row'+(on?" sel":"")+'" data-i="'+i+'"><span class="num">0'+(i+1)+'</span><h3>'+names[i]+'</h3><p>'+p+'</p><button type="button" class="chip" aria-pressed="'+on+'"><svg viewBox="0 0 18 18"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg><span>'+(on?t("added"):t("add"))+'</span><span class="sr"> '+names[i]+'</span></button></li>'}).join("");
+  $("#whyList").innerHTML=t("why").map(function(w,i){return '<li><span class="num">0'+(i+1)+'</span><span>'+w+'</span></li>'}).join("");
+  // restore values
+  $("#phone").value=S.phone;$("#consent").checked=S.consent;$("#first").value=S.first;$("#company").value=S.company;$("#other").value=S.other;$("#details").value=S.details;
+  setStepLabel();paintProgress();
+  if(S.step===4)fillSummary();
+  mRender();
+  $$('[data-t="nav.calc"]').forEach(function(a){a.href=DDP_URL+"?lang="+lang});
+  var ac=$('[data-t="actCost"]');if(ac)ac.href=ddpLink();
+  revalidate();
+}
+function chipGroup(sel,labels,mode,on){
+  var g=$(sel);
+  g.innerHTML=labels.map(function(l,i){var a=on(i);return mode==="radio"?'<button type="button" class="chip" role="radio" aria-checked="'+a+'" tabindex="'+(a||(i===0&&!labels.some(function(_,j){return on(j)}))?0:-1)+'" data-i="'+i+'"><svg viewBox="0 0 18 18"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>'+l+'</button>':'<button type="button" class="chip" aria-pressed="'+a+'" data-i="'+i+'"><svg viewBox="0 0 18 18"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg>'+l+'</button>'}).join("");
+}
+function dialOf(code){for(var i=0;i<CC.length;i++)if(CC[i][0]===code)return CC[i][1];return "+1"}
+
+/* Phone */
+function digits(s){return (s||"").replace(/\D/g,"")}
+function fmt(v,dial){var d=digits(v);if(dial==="+1"){d=d.slice(0,10);if(d.length<4)return d;if(d.length<7)return "("+d.slice(0,3)+") "+d.slice(3);return "("+d.slice(0,3)+") "+d.slice(3,6)+" "+d.slice(6)}return d.slice(0,15).replace(/(\d{3})(?=\d)/g,"$1 ").trim()}
+function phoneOk(){var d=digits(S.phone);return dialOf(S.cc)==="+1"?d.length===10:d.length>=7}
+$("#phone").addEventListener("input",function(e){var el=e.target,pos=el.value.length-el.selectionStart;el.value=fmt(el.value,dialOf(S.cc));S.phone=el.value;try{el.setSelectionRange(el.value.length-pos,el.value.length-pos)}catch(_){ }save();live("phone")});
+$("#phone").addEventListener("blur",function(){if(S.phone)check("phone",true)});
+$("#cc").addEventListener("change",function(e){S.cc=e.target.value;$("#phone").value=S.phone=fmt(S.phone,dialOf(S.cc));save();live("phone")});
+$("#consent").addEventListener("change",function(e){S.consent=e.target.checked;save();if(S.consent)clearErr("consent")});
+["first","company","other","details"].forEach(function(id){var el=$("#"+id);el.addEventListener("input",function(){S[id]=el.value;save();if(id!=="details")live(id)});el.addEventListener("blur",function(){if(S[id]&&id!=="details")check(id,true)})});
+$("#dest").addEventListener("change",function(e){S.dest=e.target.value;$("#otherWrap").hidden=S.dest!=="XX";save();sizeVP()});
+
+/* Validation: red only when something is actually wrong, green when it is right */
+var touched={};
+var rules={phone:function(){return phoneOk()},first:function(){return S.first.trim().length>0},company:function(){return S.company.trim().length>0},other:function(){return S.dest!=="XX"||S.other.trim().length>0}};
+var errKey={phone:"errPhone",first:"errReq",company:"errReq",other:"errReq"};
+function ctlOf(id){return $("#"+id).closest(".ctl")}
+function setErr(id,msg){var box=$("#"+id+"Err");if(!box)return;box.innerHTML='<p class="err"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.8v3.6M8 10.8v.1"/></svg>'+msg+'</p>';sizeVP()}
+function clearErr(id){var box=$("#"+id+"Err");if(box&&box.innerHTML){box.innerHTML="";sizeVP()}if(id==="consent")$("#consentRow").classList.remove("invalid")}
+function live(id){var ok=rules[id]();var c=ctlOf(id);c.classList.toggle("valid",ok);if(ok){c.classList.remove("invalid");clearErr(id)}else if(touched[id]){/* stay red until fixed */}}
+function check(id,shake){touched[id]=true;var ok=rules[id](),c=ctlOf(id);c.classList.toggle("valid",ok);c.classList.toggle("invalid",!ok);if(ok)clearErr(id);else{setErr(id,t(errKey[id]));if(shake&&!reduced){c.classList.remove("shake");void c.offsetWidth;c.classList.add("shake")}}return ok}
+function revalidate(){["phone","first","company","other"].forEach(function(id){if(rules[id]()&&(S[id]||"").length)ctlOf(id).classList.add("valid");if(touched[id]&&!rules[id]())setErr(id,t(errKey[id]))})}
+
+/* Chips */
+function wireChips(sel,key,mode){
+  $(sel).addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;var i=+b.dataset.i;
+    if(mode==="radio"){S[key]=S[key]===i&&key==="vol"?-1:i;$$(".chip",this).forEach(function(c,j){c.setAttribute("aria-checked",S[key]===j);c.tabIndex=(S[key]===j||(S[key]<0&&j===0))?0:-1})}
+    else{var p=PROD_KEYS[i],at=S.prods.indexOf(p);if(at>-1)S.prods.splice(at,1);else S.prods.push(p);b.setAttribute("aria-pressed",at<0);syncRows()}
+    this.classList.remove("invalid");clearErr(key==="type"?"type":"prod");save()});
+  if(mode==="radio")$(sel).addEventListener("keydown",function(e){var keys={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1};if(!keys[e.key])return;e.preventDefault();var cs=$$(".chip",this),i=cs.indexOf(document.activeElement),n=(i+keys[e.key]+cs.length)%cs.length;cs[n].focus();cs[n].click()});
+}
+wireChips("#typeChips","type","radio");wireChips("#prodChips","prods","multi");wireChips("#volChips","vol","radio");
+function syncRows(){var add=t("add"),added=t("added");$$("#rows .row").forEach(function(r){var on=S.prods.indexOf(PROD_KEYS[+r.dataset.i])>-1;r.classList.toggle("sel",on);var b=$(".chip",r);b.setAttribute("aria-pressed",on);b.firstElementChild.nextElementSibling.textContent=on?added:add});$$("#prodChips .chip").forEach(function(c,i){c.setAttribute("aria-pressed",S.prods.indexOf(PROD_KEYS[i])>-1)})}
+$("#rows").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;var i=+b.closest(".row").dataset.i,p=PROD_KEYS[i],at=S.prods.indexOf(p);if(at>-1)S.prods.splice(at,1);else{S.prods.push(p);buzz()}save();syncRows()});
+
+/* Details disclosure and files */
+$("#moreBtn").addEventListener("click",function(){var open=this.getAttribute("aria-expanded")!=="true";this.setAttribute("aria-expanded",open);$("#moreWrap").hidden=!open;sizeVP();if(open)$("#details").focus()});
+$("#files").addEventListener("change",function(){var n=this.files.length;$("#fileName").textContent=n?t("files").replace("{n}",n):t("attach")});
+
+/* Steps */
+var vp=$("#vp");
+function stepEl(n){return $('.step[data-step="'+n+'"]',vp)}
+function sizeVP(){var cur=stepEl(S.step);if(cur&&!cur.hidden)vp.style.height=cur.offsetHeight+"px"}
+function setStepLabel(){var l=$("#stepLabel");if(S.step===4){l.textContent=t("sent");l.classList.add("done")}else{l.textContent=t("step").replace("{n}",S.step);l.classList.remove("done")}$("#backBtn").classList.toggle("show",S.step===2||S.step===3)}
+function paintProgress(stagger){var segs=$$(".progress span");segs.forEach(function(s,i){var n=i+1;s.className="";var cls=S.step===4||n<S.step?"ok":(n===S.step?"cur":"");if(stagger&&cls==="ok"){setTimeout(function(){s.className="ok"},i*80)}else if(cls)s.className=cls})}
+function go(n,dir){if(n>1)track(n===4?"request_done":"request_step",{step:n});
+  var from=stepEl(S.step),to=stepEl(n);if(from===to)return;
+  var h0=from.offsetHeight;vp.style.height=h0+"px";
+  var done=function(){from.hidden=true;from.classList.remove("out-l","out-r");to.hidden=false;to.classList.remove("in-r","in-l");void to.offsetWidth;if(!reduced)to.classList.add(dir>0?"in-r":"in-l");S.step=n;save();setStepLabel();if(typeof dockUpdate==="function")dockUpdate();paintProgress(n===4);vp.style.height=to.offsetHeight+"px";focusStep(n)};
+  if(reduced){done();return}
+  from.classList.add(dir>0?"out-l":"out-r");setTimeout(done,150);
+}
+function focusStep(n){var el=stepEl(n);if(n===4){el.focus({preventScroll:true});return}var f=$("input:not([type=checkbox]):not([type=file]),select",el);if(f&&window.innerWidth>=1024)f.focus({preventScroll:true})}
+$("#backBtn").addEventListener("click",function(){if(S.step>1&&S.step<4)go(S.step-1,-1)});
+
+var form=$("#request");
+form.addEventListener("submit",function(e){
+  e.preventDefault();
+  var btn=$('.step[data-step="'+S.step+'"] .btn-primary',form);
+  if(S.step===1){
+    var ok2=$("#consent").checked;S.consent=ok2;var ok1=check("phone",true);
+    if(!ok2){$("#consentRow").classList.add("invalid");setErr("consent",t("errConsent"))}
+    if(!ok1){$("#phone").focus();return}if(!ok2){$("#consent").focus();return}
+    busy(btn,500,function(){buzz();go(2,1)});
+  }else if(S.step===2){
+    var a=check("first",true),b=check("company",true),c=S.type>-1;
+    if(!c){$("#typeChips").classList.add("invalid");setErr("type",t("errPick"))}
+    if(!a){$("#first").focus();return}if(!b){$("#company").focus();return}if(!c){$("#typeChips .chip").focus();return}
+    buzz();go(3,1);
+  }else if(S.step===3){
+    var p=S.prods.length>0,o=check("other",false);
+    if(!p){$("#prodChips").classList.add("invalid");setErr("prod",t("errPickMany"))}
+    if(!p){$("#prodChips .chip").focus();return}if(!o){$("#other").focus();return}
+    clearErr("send");btn.classList.add("loading");btn.disabled=true;
+    sendLead(buildLead()).then(function(r){btn.classList.remove("loading");btn.disabled=false;btn.blur();track(r.queued?"request_queued":"request_sent",{ref:r.ref});S.ref=r.ref;S.queued=!!r.queued;save();fillSummary();buzz();go(4,1);$("#dock").classList.remove("show")},
+      function(){btn.classList.remove("loading");btn.disabled=false;btn.blur();track("request_failed");setErr("send",t("sendErr")+' <a href="'+mailtoLead()+'">'+t("emailIt")+'</a>')});
+  }
+});
+function busy(btn,ms,cb){btn.classList.add("loading");btn.disabled=true;setTimeout(function(){btn.classList.remove("loading");btn.disabled=false;cb()},reduced?0:ms)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fillSummary(){
+  var L=t("sum"),names=t("prods"),dn=t("dests"),di=DEST.map(function(d){return d.k}).indexOf(S.dest);
+  var prods=S.prods.map(function(p){return names[PROD_KEYS.indexOf(p)]}).join(", ");
+  var dest=S.dest==="XX"?S.other:dn[di];var last4=digits(S.phone).slice(-4);
+  var rows=[[L[0],S.first],[L[1],S.company],[L[2],prods],[L[3],dest],[L[4],dialOf(S.cc)+" ··· "+last4],[L[5],S.ref]];
+  $("#summary").innerHTML=rows.map(function(r){return '<div><dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd></div>'}).join("");
+  $("#mailAct").href="mailto:sales@post.supply?subject="+encodeURIComponent(S.ref+" · "+S.company);var qn=$("#queuedNote");if(qn)qn.hidden=!S.queued;
+}
+
+/* Usage events and lead delivery. The host sets window.PS_TRACK and window.PS_LEAD_ENDPOINT. */
+function track(ev,props){try{props=props||{};props.lang=lang;if(typeof window.PS_TRACK==="function")window.PS_TRACK(ev,props);(window.dataLayer=window.dataLayer||[]).push(Object.assign({event:"ps_"+ev},props))}catch(e){}}
+function localRef(){return "PS-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,6).toUpperCase()}
+function buildLead(){var dn=T.en.dests[DEST.map(function(d){return d.k}).indexOf(S.dest)];
+  return {source:"site",createdAt:new Date().toISOString(),language:lang,page:location.href,
+    phone:dialOf(S.cc)+" "+digits(S.phone),country:S.cc,consent:S.consent,consentText:t("consent")+" "+legalText(),
+    firstName:S.first.trim(),company:S.company.trim(),buyerType:T.en.types[S.type],products:S.prods.slice(),
+    destination:S.dest==="XX"?S.other.trim():dn,volume:S.vol>-1?T.en.vols[S.vol]:null,details:S.details.trim()}}
+function postLead(lead){var fd=new FormData();fd.append("lead",JSON.stringify(lead));var f=$("#files");if(f&&f.files)for(var i=0;i<f.files.length;i++)fd.append("files",f.files[i]);
+  return fetch(window.PS_LEAD_ENDPOINT,{method:"POST",body:fd}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json().catch(function(){return {}})}).then(function(j){return {ref:j.ref||localRef()}})}
+function sendLead(lead){
+  if(!window.PS_LEAD_ENDPOINT)return new Promise(function(res){setTimeout(function(){res({ref:localRef(),demo:true})},reduced?0:800)});
+  if(navigator.onLine===false){var q=[];try{q=JSON.parse(get("l","ps.outbox")||"[]")}catch(e){}lead.ref=localRef();q.push(lead);set("l","ps.outbox",JSON.stringify(q));return Promise.resolve({ref:lead.ref,queued:true})}
+  return postLead(lead)}
+function flushOutbox(){if(!window.PS_LEAD_ENDPOINT||navigator.onLine===false)return;var q=[];try{q=JSON.parse(get("l","ps.outbox")||"[]")}catch(e){}if(!q.length)return;
+  postLead(q[0]).then(function(){q.shift();set("l","ps.outbox",JSON.stringify(q));flushOutbox()},function(){})}
+window.addEventListener("online",flushOutbox);setTimeout(flushOutbox,1500);
+function mailtoLead(){var l=buildLead(),body=[l.firstName+" · "+l.company,l.phone,(l.products||[]).join(", "),l.destination,l.details].filter(Boolean).join("\n");
+  return "mailto:sales@post.supply?subject="+encodeURIComponent("Request · "+l.company)+"&body="+encodeURIComponent(body)}
+
+/* Restore step on load */
+$$(".step",vp).forEach(function(s){s.hidden=+s.dataset.step!==S.step});
+
+/* Scroll to form from any CTA */
+$$("[data-go=request]").forEach(function(a){a.addEventListener("click",function(e){e.preventDefault();closeAll();var card=$("#request");card.scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});setTimeout(function(){focusStep(S.step);if(S.step===1&&window.innerWidth<1024)$("#phone").focus({preventScroll:true})},reduced?0:450)})});
+
+/* Calculator */
+/* Landing preview of the DDP app. Same rules as ddp.post.supply, with that app's starting assumptions. */
+var DDP_URL="https://ddp.post.supply/";
+var MDEF={units:1000,freight:5000,ins:1,duty:5,broker:350,port:650,inland:450};
+var MRULE={PR:{tax:"IVU",rate:10.5,db:"FOB",tb:"FOB",fee:"US"},DO:{tax:"ITBIS",rate:18,db:"CIF",tb:"CIFD",fee:"none"},JM:{tax:"GCT",rate:15,db:"CIF",tb:"CIFD",fee:"JM"},US:{tax:null,rate:0,db:"FOB",tb:"FOB",fee:"US"},XX:{tax:null,rate:0,db:"CIF",tb:"CIFD",fee:"none"}};
+var MUNIT={"pvc-panel":0,"plywood":0,"treated-pine-posts":1,"interior-doors":2,"other":3};
+var mDest="PR",mProd="plywood",mPrev=null,mT=null;
+function m2(v){return "$"+v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function mEstimate(dest,fobU){var r=MRULE[dest],q=MDEF.units,goods=fobU*q,fr=MDEF.freight,ins=(goods+fr)*MDEF.ins/100,cif=goods+fr+ins;
+  var duty=(r.db==="FOB"?goods:cif)*MDEF.duty/100,fees=r.fee==="US"?Math.min(670.86,Math.max(34.58,goods*.003464))+goods*.00125:r.fee==="JM"?cif*.008:0;
+  var tax=r.tax?(r.tb==="FOB"?goods:cif+duty+fees)*r.rate/100:0,local=MDEF.broker+MDEF.port+MDEF.inland,total=cif+duty+fees+tax+local;
+  return {q:q,goods:goods,fi:fr+ins,df:duty+fees,tax:tax,taxName:r.tax,local:local,total:total,per:total/q}}
+function mCalc(){var v=parseFloat(String($("#mFob").value).replace(/[^0-9.]/g,""));if(!isFinite(v))v=0;
+  var u=MUNIT[mProd],un=t("unitOne")[u],e=mEstimate(mDest,v);
+  $("#mFobLbl").textContent=t("fobU").replace("{u}",un);$("#mPerLbl").textContent=t("landedPer").replace("{u}",un);
+  if(mPrev!==null&&Math.abs(e.per-mPrev)>=.005){var d=e.per-mPrev,el=$("#mDelta");el.textContent=(d<0?"−":"+")+m2(Math.abs(d));el.className="delta show "+(d<0?"down":"up");clearTimeout(mT);mT=setTimeout(function(){el.classList.remove("show")},1400)}
+  mPrev=e.per;$("#mPer").textContent=m2(e.per);
+  var parts=[e.goods,e.fi,e.df,e.local,e.tax],sum=e.total||1;$$(".ddp-card .bar i").forEach(function(el,i){el.style.flexGrow=parts[i]/sum;el.style.flexBasis="0";el.hidden=parts[i]<=0});
+  var lg=t("lg"),rows=[[lg[0],e.goods],[lg[1],e.fi],[lg[2],e.df],[lg[3],e.local]];if(e.tax>0)rows.push([e.taxName,e.tax]);
+  $("#mLines").innerHTML=rows.map(function(r){return '<li><span>'+r[0]+'</span><span>'+m2(r[1]/e.q)+'</span></li>'}).join("");
+  var q=new URLSearchParams();q.set("dest",mDest);q.set("prod",mProd);q.set("fob",String(v));q.set("lang",lang);$("#mOpen").href=DDP_URL+"?"+q.toString();if(!$("#mOpen").dataset.t){$("#mOpen").dataset.t="1";$("#mOpen").addEventListener("click",function(){track("ddp_open_from_site")})}
+  try{set("l","ps.mini",JSON.stringify({d:mDest,p:mProd,f:$("#mFob").value}))}catch(_){}}
+function mRender(){var dn=t("dests");$("#mDest").innerHTML=["PR","DO","JM","US","XX"].map(function(k,i){return '<option value="'+k+'">'+dn[i]+'</option>'}).join("");
+  $("#mProd").innerHTML=PROD_KEYS.map(function(k,i){return '<option value="'+k+'">'+t("prods")[i]+'</option>'}).join("");
+  $("#mDest").value=mDest;$("#mProd").value=mProd;mPrev=null;mCalc()}
+(function(){var o=null;try{o=JSON.parse(get("l","ps.mini")||"null")}catch(e){}if(o&&MRULE[o.d]){mDest=o.d;mProd=o.p||mProd;$("#mFob").value=o.f||"10"}else if(MRULE[region])mDest=region})();
+$("#mDest").addEventListener("change",function(e){mDest=e.target.value;buzz();mCalc()});
+$("#mProd").addEventListener("change",function(e){mProd=e.target.value;buzz();mCalc()});
+$("#mFob").addEventListener("input",function(){mCalc()});
+$("#mFob").addEventListener("focus",function(){var e=this;setTimeout(function(){try{e.select()}catch(_){}},0)});
+function ddpLink(){var q=new URLSearchParams();q.set("dest",S.dest&&MRULE[S.dest]?S.dest:mDest);q.set("prod",S.prods[0]||mProd);q.set("lang",lang);return DDP_URL+"?"+q.toString()}
+
+/* Sheets */
+var openSheet=null,lastTrigger=null;
+function open(sheet,trigger){closeAll(true);lastTrigger=trigger;var sc=$("#scrim");sheet.hidden=false;sc.hidden=false;var desk=window.innerWidth>=1024&&sheet.id==="langSheet";sc.classList.toggle("light",desk);
+  if(desk){var r=trigger.getBoundingClientRect(),w=280,left=Math.min(Math.max(16,r.right-w),window.innerWidth-w-16);sheet.style.left=left+"px";sheet.style.top=(r.bottom+8)+"px"}else{sheet.style.left="";sheet.style.top=""}
+  requestAnimationFrame(function(){sheet.classList.add("show");sc.classList.add("show")});trigger.setAttribute("aria-expanded","true");openSheet=sheet;document.body.style.overflow=desk?"":"hidden";
+  var first=$("[aria-current=true]",sheet)||$("button,a",sheet);setTimeout(function(){first&&first.focus()},40)}
+function closeAll(instant){if(!openSheet)return;var sh=openSheet,sc=$("#scrim");sh.classList.remove("show");sc.classList.remove("show");document.body.style.overflow="";if(lastTrigger){lastTrigger.setAttribute("aria-expanded","false");if(!instant)lastTrigger.focus()}openSheet=null;setTimeout(function(){if(!sh.classList.contains("show"))sh.hidden=true;if(!openSheet)sc.hidden=true},instant?0:280)}
+$("#langBtn").addEventListener("click",function(){openSheet&&openSheet.id==="langSheet"?closeAll():open($("#langSheet"),this)});
+$("#menuBtn").addEventListener("click",function(){open($("#menuSheet"),this)});
+$("#scrim").addEventListener("click",function(){closeAll()});
+$("#langList").addEventListener("click",function(e){var b=e.target.closest("[data-lang]");if(!b)return;lang=b.dataset.lang;set("l","ps.lang",lang);closeAll();render();requestAnimationFrame(sizeVP)});
+$$("[data-close]").forEach(function(a){a.addEventListener("click",function(){closeAll(true)})});
+document.addEventListener("keydown",function(e){if(!openSheet)return;if(e.key==="Escape"){closeAll();return}if(e.key==="Tab"){var f=$$("button,a",openSheet),i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}}});
+/* swipe down to close */
+$$(".sheet").forEach(function(sh){var y0=null;sh.addEventListener("touchstart",function(e){if(sh.scrollTop<=0)y0=e.touches[0].clientY},{passive:true});sh.addEventListener("touchmove",function(e){if(y0===null)return;var dy=e.touches[0].clientY-y0;if(dy>0)sh.style.transform="translateY("+dy+"px)"},{passive:true});sh.addEventListener("touchend",function(e){if(y0===null)return;var dy=e.changedTouches[0].clientY-y0;sh.style.transform="";y0=null;if(dy>80)closeAll()})});
+window.addEventListener("resize",function(){if(openSheet&&openSheet.id==="langSheet")closeAll(true);sizeVP()});
+
+/* Header compression, dock, how-it-works line */
+var hdr=$("#hdr"),cardIn=true,closingIn=false;
+function dockUpdate(){$("#dock").classList.toggle("show",S.step===1&&!cardIn&&!closingIn&&window.scrollY>200)}
+if("IntersectionObserver" in window){
+  cardIn=true;closingIn=false;
+  new IntersectionObserver(function(es){es.forEach(function(e){if(e.target.id==="request")cardIn=e.isIntersecting;else closingIn=e.isIntersecting});dockUpdate()},{threshold:0}).observe($("#request"));
+  new IntersectionObserver(function(es){closingIn=es[0].isIntersecting;dockUpdate()}).observe($("#start"));
+  new IntersectionObserver(function(es,o){if(es[0].isIntersecting){$("#steps3").classList.add("drawn");o.disconnect()}},{threshold:.4}).observe($("#steps3"));
+}else $("#steps3").classList.add("drawn");
+window.addEventListener("scroll",function(){hdr.classList.toggle("scrolled",window.scrollY>80)},{passive:true});
+
+render();
+requestAnimationFrame(function(){vp.style.height=stepEl(S.step).offsetHeight+"px"});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(sizeVP);
+})();
+</script>

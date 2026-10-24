@@ -1,0 +1,151 @@
+<style>
+/* Reading page: one 680px column, mono section numbers, tone not boxes. */
+:root{--ground:#F0EBE5;--surface:#F8F7F3;--ink:#1C1B19;--ink-2:#4A4740;--muted:#6B665E;--hair:#DCD6CE;--signal:#FF5A1F;--signal-text:#AD3D0B;--flag:#FBE7DC;
+--sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;color-scheme:only light}
+:root[data-theme="dark"]{--ground:#171716;--surface:#232220;--ink:#F0EBE5;--ink-2:#CFC8BE;--muted:#A39C92;--hair:#34322F;--signal-text:#FF7A45;--flag:#3A2418;color-scheme:only dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:400 18px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:728px;margin:0 auto;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+header .wrap{display:flex;align-items:center;gap:8px;height:68px}
+.logo{font-weight:700;font-size:21px;letter-spacing:-.035em;text-decoration:none;color:var(--ink);margin-right:auto}
+.logo i{display:inline-block;width:.24em;height:.24em;border-radius:50%;background:var(--signal);margin:0 .02em;transform:translateY(.05em)}
+.lang{display:flex;gap:2px;background:var(--surface);border-radius:6px;padding:3px}
+.lang button{border:0;background:transparent;font:500 14px var(--mono);color:var(--muted);padding:8px 12px;min-height:38px;border-radius:4px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ground);color:var(--ink)}
+main{padding-block:40px 96px}
+.eyebrow{font-family:var(--mono);font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:center;margin:0}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--signal)}
+h1{font-size:clamp(38px,8vw,60px);line-height:1.04;letter-spacing:-.035em;margin:16px 0 0;font-weight:600}
+.lead{color:var(--ink-2);font-size:20px;margin:16px 0 0}
+.meta{font-family:var(--mono);font-size:13px;color:var(--muted);margin:20px 0 0}
+section{border-top:1px solid var(--hair);margin-top:40px;padding-top:28px}
+h2{display:flex;gap:14px;align-items:baseline;font-size:24px;letter-spacing:-.02em;font-weight:600;margin:0 0 12px}
+h2 span{font-family:var(--mono);font-size:13px;font-weight:400;color:var(--signal-text)}
+p,li{color:var(--ink-2)}
+ul{padding-left:20px;margin:8px 0}
+li{margin:6px 0}
+b{color:var(--ink);font-weight:600}
+.ph{background:var(--flag);color:var(--ink);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:15px}
+a{color:var(--ink);text-underline-offset:3px}
+footer{border-top:1px solid var(--hair);padding-block:28px calc(28px + env(safe-area-inset-bottom,0px));font-size:15px;color:var(--muted)}
+:focus-visible{outline:2px solid var(--muted);outline-offset:3px;border-radius:4px}
+[hidden]{display:none!important}
+</style>
+
+<header><div class="wrap">
+  <a class="logo" href="https://post.supply">post<i></i>supply</a>
+  <div class="lang" role="group" aria-label="Language"><button type="button" data-l="en" aria-pressed="true">EN</button><button type="button" data-l="es" aria-pressed="false">ES</button></div>
+</div></header>
+
+<main class="wrap">
+<article lang="en" id="en">
+  <p class="eyebrow">post.supply · Privacy</p>
+  <h1>Privacy policy</h1>
+  <p class="lead">What we collect when you ask us for prices, why, and the choices you have. Written plainly.</p>
+  <p class="meta">Effective <span class="ph">[founder to confirm date]</span> · Applies to post.supply and ddp.post.supply</p>
+
+  <section><h2><span>01</span>Who we are</h2>
+  <p>post.supply sells wholesale building materials, quoted FOB or CIF. The business responsible for your information is <span class="ph">[founder to confirm legal entity name]</span>, <span class="ph">[founder to confirm business address]</span>. Contact: <a href="mailto:sales@post.supply">sales@post.supply</a>.</p></section>
+
+  <section><h2><span>02</span>What we collect</h2>
+  <ul>
+    <li><b>What you send us in a request:</b> mobile number, first name, company, type of business, products, destination, volume, and any details or files you add.</li>
+    <li><b>Your consent choice:</b> that you agreed to be contacted about your request, with the date and the wording you saw.</li>
+    <li><b>Calculator figures you choose to send:</b> if you request prices from the DDP calculator, the numbers on screen go with your request.</li>
+    <li><b>Basic usage events:</b> for example that the calculator was opened or a link was copied, so we can improve the tools. We do not use advertising trackers.</li>
+  </ul>
+  <p>Figures you type into the DDP calculator are saved only on your own device unless you send a request or share a link yourself.</p></section>
+
+  <section><h2><span>03</span>How we use it</h2>
+  <ul>
+    <li>To review your request and prepare FOB or CIF prices.</li>
+    <li>To contact you about that request by phone call, text message, WhatsApp or email.</li>
+    <li>To coordinate an order you approve, and keep the records that requires.</li>
+  </ul>
+  <p>Messages about your request are not marketing. We will not send you marketing messages unless you separately agree to receive them.</p></section>
+
+  <section><h2><span>04</span>Text messages</h2>
+  <p>If you agree, we may text you about your request. Message frequency varies with your request. Message and data rates may apply. Reply <b>STOP</b> to stop at any time, or <b>HELP</b> for help. You can also email <a href="mailto:sales@post.supply">sales@post.supply</a>.</p>
+  <p><b>We do not sell or share your mobile number or your text consent with third parties or affiliates for their marketing or promotional purposes.</b></p></section>
+
+  <section><h2><span>05</span>Who we share it with</h2>
+  <p>We do not sell your personal information. We share it only with service providers that help us run post.supply (for example hosting, email and messaging), who may use it only to provide those services to us, and when the law requires it.</p></section>
+
+  <section><h2><span>06</span>How long we keep it</h2>
+  <p>We keep request information while it is useful for quoting and serving you, and longer only where records are required for orders, taxes or the law. <span class="ph">[founder to confirm retention period]</span></p></section>
+
+  <section><h2><span>07</span>Your choices</h2>
+  <ul>
+    <li>Ask what we hold about you, or ask us to correct or delete it, by emailing <a href="mailto:sales@post.supply">sales@post.supply</a>.</li>
+    <li>Stop texts any time by replying STOP.</li>
+    <li>Clear the calculator's saved figures by clearing this site's data in your browser.</li>
+  </ul></section>
+
+  <section><h2><span>08</span>Changes</h2>
+  <p>If we change this policy, we will update the effective date above. Significant changes will be shown on the site.</p></section>
+</article>
+
+<article lang="es" id="es" hidden>
+  <p class="eyebrow">post.supply · Privacidad</p>
+  <h1>Política de privacidad</h1>
+  <p class="lead">Qué información recogemos cuando nos pides precios, para qué la usamos y qué opciones tienes. En palabras claras.</p>
+  <p class="meta">Vigente desde <span class="ph">[fecha por confirmar]</span> · Aplica a post.supply y ddp.post.supply</p>
+
+  <section><h2><span>01</span>Quiénes somos</h2>
+  <p>post.supply vende materiales de construcción al por mayor, cotizados FOB o CIF. El negocio responsable de tu información es <span class="ph">[nombre legal por confirmar]</span>, <span class="ph">[dirección por confirmar]</span>. Contacto: <a href="mailto:sales@post.supply">sales@post.supply</a>.</p></section>
+
+  <section><h2><span>02</span>Qué recogemos</h2>
+  <ul>
+    <li><b>Lo que nos envías en una solicitud:</b> número de celular, nombre, empresa, tipo de negocio, productos, destino, volumen y cualquier detalle o archivo que añadas.</li>
+    <li><b>Tu autorización:</b> que aceptaste que te contactemos sobre tu solicitud, con la fecha y el texto que viste.</li>
+    <li><b>Cifras de la calculadora que decidas enviar:</b> si pides precios desde la calculadora DDP, los números en pantalla van con tu solicitud.</li>
+    <li><b>Eventos básicos de uso:</b> por ejemplo, que se abrió la calculadora o se copió un enlace, para mejorar las herramientas. No usamos rastreadores publicitarios.</li>
+  </ul>
+  <p>Las cifras que escribes en la calculadora DDP se guardan solo en tu dispositivo, a menos que envíes una solicitud o compartas un enlace.</p></section>
+
+  <section><h2><span>03</span>Para qué la usamos</h2>
+  <ul>
+    <li>Para revisar tu solicitud y preparar precios FOB o CIF.</li>
+    <li>Para contactarte sobre esa solicitud por llamada, mensaje de texto, WhatsApp o email.</li>
+    <li>Para coordinar una orden que apruebes y guardar los registros que eso requiere.</li>
+  </ul>
+  <p>Los mensajes sobre tu solicitud no son publicidad. No te enviaremos publicidad a menos que lo aceptes por separado.</p></section>
+
+  <section><h2><span>04</span>Mensajes de texto</h2>
+  <p>Si lo autorizas, podemos escribirte por texto sobre tu solicitud. La frecuencia varía según tu solicitud. Pueden aplicar cargos por mensajes y datos. Responde <b>STOP</b> para dejar de recibir mensajes en cualquier momento, o <b>HELP</b> para ayuda. También puedes escribir a <a href="mailto:sales@post.supply">sales@post.supply</a>.</p>
+  <p><b>No vendemos ni compartimos tu número de celular ni tu autorización de mensajes con terceros o afiliados para su publicidad o promoción.</b></p></section>
+
+  <section><h2><span>05</span>Con quién la compartimos</h2>
+  <p>No vendemos tu información personal. Solo la compartimos con proveedores que nos ayudan a operar post.supply (por ejemplo hosting, email y mensajería), que solo pueden usarla para darnos esos servicios, y cuando la ley lo exige.</p></section>
+
+  <section><h2><span>06</span>Cuánto tiempo la guardamos</h2>
+  <p>Guardamos la información de solicitudes mientras sea útil para cotizarte y atenderte, y por más tiempo solo cuando la ley, los impuestos o una orden lo requieran. <span class="ph">[período por confirmar]</span></p></section>
+
+  <section><h2><span>07</span>Tus opciones</h2>
+  <ul>
+    <li>Pide saber qué información tenemos de ti, o que la corrijamos o borremos, escribiendo a <a href="mailto:sales@post.supply">sales@post.supply</a>.</li>
+    <li>Deja de recibir textos en cualquier momento respondiendo STOP.</li>
+    <li>Borra las cifras guardadas de la calculadora borrando los datos de este sitio en tu navegador.</li>
+  </ul></section>
+
+  <section><h2><span>08</span>Cambios</h2>
+  <p>Si cambiamos esta política, actualizaremos la fecha de vigencia arriba. Los cambios importantes se mostrarán en el sitio.</p></section>
+</article>
+</main>
+
+<footer><div class="wrap">post.supply · <a href="mailto:sales@post.supply">sales@post.supply</a> · © 2026 post.supply</div></footer>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  function night(){var d=new Date(),m=d.getHours()*60+d.getMinutes();return m<390||m>=1110}
+  root.setAttribute("data-theme",night()?"dark":"light");
+  var saved=null;try{saved=localStorage.getItem("ps.lang")}catch(e){}
+  var q=null;try{q=new URLSearchParams(location.search).get("lang")}catch(e){}
+  var l=q||saved||((navigator.language||"").slice(0,2)==="es"?"es":"en");if(l!=="es")l="en";
+  function show(x){document.getElementById("en").hidden=x!=="en";document.getElementById("es").hidden=x!=="es";root.lang=x;
+    Array.prototype.forEach.call(document.querySelectorAll(".lang button"),function(b){b.setAttribute("aria-pressed",b.dataset.l===x)})}
+  show(l);
+  Array.prototype.forEach.call(document.querySelectorAll(".lang button"),function(b){b.addEventListener("click",function(){show(b.dataset.l);try{localStorage.setItem("ps.lang",b.dataset.l)}catch(e){}})});
+})();
+</script>

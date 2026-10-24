@@ -1,0 +1,29 @@
+<!-- ddp.post.supply: put in <head> -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F0EBE5">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DDP">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<script>
+  /* Set by the host. Leads: POST multipart/form-data, field "lead" (JSON) + optional "files", return {"ref":"..."}; non-2xx on failure. */
+  window.PS_LEAD_ENDPOINT = "REPLACE_WITH_LEAD_API_URL";
+  /* Analytics: called as PS_TRACK(eventName, props). Wire to the site's analytics. */
+  window.PS_TRACK = function (event, props) { /* REPLACE: send to analytics */ };
+</script>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="canonical" href="https://ddp.post.supply/">
+<title>post.supply DDP</title>
+<meta name="description" content="Landed cost per piece for building materials quoted FOB or CIF: duty, fees, tax, port and trucking.">
+<meta property="og:title" content="post.supply DDP">
+<meta property="og:description" content="Your landed cost per piece, from an FOB or CIF quote.">
+<meta property="og:image" content="https://ddp.post.supply/icon-512.png">
+<!-- Before </body> -->
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){})})}</script>
