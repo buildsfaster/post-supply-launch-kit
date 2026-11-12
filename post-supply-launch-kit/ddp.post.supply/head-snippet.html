@@ -1,4 +1,152 @@
 <!-- ddp.post.supply: put in <head> -->
+<script>(function(){try{
+  if(sessionStorage.getItem('ps.resetRequested')){localStorage.removeItem('ps.mini');sessionStorage.removeItem('ps.resetRequested')}
+  localStorage.removeItem('ps.calc');
+}catch(e){}
+try{if('caches' in window){caches.keys().then(function(ks){ks.forEach(function(n){if(/^ddp-/.test(n)&&n!=='ddp-v7fix')caches.delete(n)})})}}catch(e){}
+})();
+window.addEventListener("DOMContentLoaded",function(){(function(){
+  /* v7.0 blank start (B, 2026-11-12 via main): "Should be zero as starting VALUES",
+     "TBD if empty". First load and Reset both give blank inputs and TBD outputs;
+     typing fills in live; Destination and Product keep their neutral first-load
+     selection; toast and the real Reset button stay. No refill of example numbers. */
+  var BLANKS=['cFobU','cPerCont','cFrCont','cIns','cDuty','cTax','cBroker','cPort','cInland','cOther','cSell','cTarget'];
+  function $(i){return document.getElementById(i)}
+  function vv(i){var e=$(i);return e?String(e.value).trim():''}
+  var iSet=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
+  var sSet=Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype,'value').set;
+  function setV(i,v){var e=$(i);if(!e)return;try{iSet.call(e,v);e.dispatchEvent(new Event('input',{bubbles:true}))}catch(x){}}
+  var L5=['en','es','pt','zh','ja'];
+  function lang(){try{return(window.bwUI&&bwUI.pick)?bwUI.pick():(localStorage.getItem('lang')||'en')}catch(e){return'en'}}
+  function pick(a){var i=L5.indexOf(lang());return a[i<0?0:i]||a.en}
+  var NEED={en:'Enter FOB price to see your cost',es:'Ingresa el precio FOB para ver tu costo',pt:'Insira o preço FOB para ver o seu custo',zh:'输入 FOB 价格查看成本',ja:'FOB 価格を入力するとコストが表示されます'};
+  var NEEDU={en:'Add units per container to see your cost',es:'Añade las unidades por contenedor para ver tu costo',pt:'Adicione as unidades por contêiner para ver seu custo',zh:'输入每柜数量查看成本',ja:'コンテナあたりの数量を入力するとコストが表示されます'};
+  var LINES=['oGoods','oFreight','oIns','oCif','oDuty','oFees','oBroker','oPort','oInland','oOther','oTax','oDdp','oCash'];
+  var HIDES=['oCmp','oMar','oSug'];
+  var DELTAS=['oDelta','bDelta'];
+  /* shared-link prefill (?fob=..&units=..): never blank a URL that carries calc inputs */
+  var prefill=false;try{var q=new URLSearchParams(location.search);['fob','units','cont','fr','ins','tax','duty','broker','port','inland','other'].forEach(function(k){if(q.get(k))prefill=true})}catch(e){}
+  var armed=!prefill;
+  ['beforeinput','input','change','keydown'].forEach(function(t){document.addEventListener(t,function(e){if(e.isTrusted)armed=false},true)});
+  function blankAll(){
+    if(!armed)return;
+    BLANKS.forEach(function(id){var e=$(id);if(!e)return;
+      if(String(e.value)!=='')setV(id,'');
+      if(e.placeholder!=='TBD'){try{e.placeholder='TBD'}catch(x){}}
+    });
+    var cc=$('cConts');if(cc&&String(cc.value)==='')setV('cConts','1');
+  }
+  /* own always-visible Reset button (top of inputs, sticky on mobile) + toast */
+  var RESET_L={en:'Reset to starting values',es:'Volver a valores iniciales',pt:'Voltar aos valores iniciais',zh:'恢复初始值',ja:'初期値にリセット'};
+  function rLang(){try{var l=localStorage.getItem('ps.lang')||localStorage.getItem('lang')||document.documentElement.lang||'en';return String(l).slice(0,2)}catch(e){return'en'}}
+  var lastReset=0;
+  function doReset(){
+    if(Date.now()-lastReset<600)return;lastReset=Date.now();
+    if(!$('cFobU')){try{localStorage.removeItem('ps.calc');localStorage.removeItem('ps.mini')}catch(err){}location.reload();return}
+    try{localStorage.removeItem('ps.calc');localStorage.removeItem('ps.mini')}catch(err){}
+    var d=$('cDest');if(d){try{sSet.call(d,'US');d.dispatchEvent(new Event('change',{bubbles:true}))}catch(err){}}
+    var p=$('cProd');if(p){try{sSet.call(p,'plywood');p.dispatchEvent(new Event('change',{bubbles:true}))}catch(err){}}
+    try{var e4=$('cCur');if(e4){iSet.call(e4,'');e4.dispatchEvent(new Event('input',{bubbles:true}))}}catch(err){}
+    try{var btns=document.querySelectorAll('button');for(var bi=0;bi<btns.length;bi++){var bt=btns[bi];var tx=(bt.textContent||'').trim();
+      if(tx==='FOB'){var on=bt.getAttribute('aria-pressed')==='true'||/(^|s)(on|sel|active)(s|$)/.test(bt.className||'');if(!on)bt.click()}}}catch(err){}
+    try{window.scrollTo(0,0)}catch(err){}
+    var rs=$('cResell');if(rs&&rs.checked){rs.checked=false;rs.dispatchEvent(new Event('change',{bubbles:true}))}
+    var fl=[];
+    BLANKS.forEach(function(id){var el2=$(id);if(!el2)return;setV(id,'');if(el2.placeholder!=='TBD'){try{el2.placeholder='TBD'}catch(err2){}}fl.push(el2)});
+    var cc=$('cConts');if(cc){setV('cConts','1');fl.push(cc)}
+    if(d)fl.push(d);if(p)fl.push(p);
+    armed=true; /* stay armed so nothing refills the blanks until the user types */
+    var msg=document.getElementById('bwResetDone');if(!msg){msg=document.createElement('div');msg.id='bwResetDone';msg.setAttribute('role','status');msg.style.cssText='position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#1C1B19;color:#fff;padding:12px 20px;border-radius:10px;font:600 15px sans-serif';document.body.appendChild(msg)}
+    msg.textContent=rLang()==='es'?'Valores restablecidos':'Reset done';msg.style.display='block';setTimeout(function(){msg.style.display='none'},2200);
+    setTimeout(function(){var ok=BLANKS.every(function(k){return !$(k)||String($(k).value)===''})&&(!cc||String(cc.value)==='1')&&(!d||d.value==='US')&&(!p||p.value==='plywood');
+      if(!ok){try{sessionStorage.setItem('ps.resetRequested','1');localStorage.removeItem('ps.calc');localStorage.removeItem('ps.mini')}catch(err){}location.replace(location.pathname)}},300);
+    fl.forEach(function(el3){el3.classList.remove('bw-rstf');void el3.offsetWidth;el3.classList.add('bw-rstf');
+      setTimeout(function(){el3.classList.remove('bw-rstf')},1000)});
+  }
+  function resetEvent(e){
+    var t=e.target&&e.target.closest?e.target.closest('#cReset,#bwResetTop,[data-bw-reset]'):null;
+    if(!t)return;
+    if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;
+    e.preventDefault();e.stopImmediatePropagation();doReset();
+  }
+  ['click','pointerup','touchend','keydown'].forEach(function(ev){document.addEventListener(ev,resetEvent,{capture:true,passive:false})});
+  var EXAMPLE_L={en:'Try example numbers',es:'Probar con números de ejemplo',pt:'Testar com números de exemplo',zh:'试用示例数字',ja:'例の数値を試す'};
+  var EXDEF={cFobU:'10',cPerCont:'1000',cConts:'1',cFrCont:'5000',cIns:'1',cDuty:'5',cBroker:'350',cPort:'650',cInland:'450',cOther:'0'};
+  function flashF(el3){el3.classList.remove('bw-rstf');void el3.offsetWidth;el3.classList.add('bw-rstf');setTimeout(function(){el3.classList.remove('bw-rstf')},1000)}
+  function doExample(){
+    if(!$('cFobU'))return;
+    armed=false; /* the example is a deliberate fill: stop blanking */
+    for(var id in EXDEF){var e=$(id);if(!e)continue;setV(id,EXDEF[id]);flashF(e)}
+  }
+  function mountReset(){
+    var ctl=document.getElementById('bwCtl');
+    if(!ctl){
+      var st=document.createElement('style');
+      st.textContent='@keyframes bwrstf{0%{background-color:rgba(224,122,58,.35)}100%{background-color:transparent}}'+
+        '#cReset,#bwResetTop,#bwExTop,[data-bw-reset]{user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer;min-height:44px}'+
+        '.bw-rstf{animation:bwrstf .9s ease-out;border-radius:6px}'+
+        '#bwCtl{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px max(16px,calc((100% - 1184px)/2))}'+
+        '#bwCtl button{font:inherit;font-size:13px;font-weight:600;padding:10px 18px;min-height:44px;border-radius:10px;cursor:pointer;width:max-content}'+
+        '#bwExTop{border:1px solid #FA5B19;background:#FA5B19;color:#fff}'+
+        '#bwResetTop{border:1px solid #1C1B19;background:#1C1B19;color:#F8F7F3}'+
+        'html.dark #bwResetTop{background:#F0EBE5;color:#1C1B19;border-color:#F0EBE5}'+
+        '@media(max-width:700px){#bwCtl{position:fixed;left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:61;margin:0;flex-wrap:nowrap}'+
+        '#bwCtl button{flex:1;width:auto;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:10px 8px}}';
+      document.head.appendChild(st);
+      ctl=document.createElement('div');
+      ctl.id='bwCtl';
+      var bx=document.createElement('button');
+      bx.id='bwExTop';bx.type='button';
+      bx.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();doExample()});
+      var b=document.createElement('button');
+      b.id='bwResetTop';b.type='button';
+      b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();doReset()});
+      ctl.appendChild(bx);ctl.appendChild(b);
+      var anchor=$('cDest')||$('cFobU');
+      var host=null;
+      if(anchor){var n=anchor;while(n.parentElement&&n.parentElement.tagName!=='MAIN'&&n.parentElement!==document.body)n=n.parentElement;host=n}
+      if(host&&host.parentElement)host.parentElement.insertBefore(ctl,host);
+      else document.body.appendChild(ctl);
+    }
+    var old=$('cReset');if(old&&old.tagName!=='BUTTON'){var rb=document.createElement('button');rb.id='cReset';rb.type='button';rb.className=old.className;rb.textContent=old.textContent;old.replaceWith(rb)}
+    var lbl=RESET_L[rLang()]||RESET_L.en;
+    var rst=document.getElementById('bwResetTop');if(rst&&rst.textContent!==lbl)rst.textContent=lbl;
+    var elbl=EXAMPLE_L[rLang()]||EXAMPLE_L.en;
+    var exb=document.getElementById('bwExTop');if(exb&&exb.textContent!==elbl)exb.textContent=elbl;
+  }
+  setInterval(mountReset,800);mountReset();
+  /* blank-state outputs: while FOB or units is blank, totals read TBD + localized ask
+     line, fee row TBD, bar/legend/delta/compare/margin/suggested hidden. Restore on refill. */
+  var blankOn=false,saved=null;
+  function blankFix(){
+    var blank=armed||vv('cFobU')===''||vv('cPerCont')==='';
+    if(blank){
+      if(!blankOn){
+        blankOn=true;saved={};
+        var l=$('oPerLbl');if(l)saved.lbl=l.textContent;
+        LINES.forEach(function(k){var e=$(k);if(e)saved[k]=e.textContent;var u=$(k+'U');if(u)saved[k+'U']=u.textContent});
+        var fv=$('cFeesV');if(fv)saved.fv=fv.textContent;
+      }
+      var l=$('oPerLbl');if(l)l.textContent=pick(vv('cFobU')===''?NEED:NEEDU);
+      ['oPer','oTotal','bTotal'].forEach(function(i){var e=$(i);if(e&&e.textContent!=='TBD')e.textContent='TBD'});
+      LINES.forEach(function(k){var e=$(k);if(e&&e.textContent!=='')e.textContent='';var u=$(k+'U');if(u&&u.textContent!=='')u.textContent=''});
+      var fv=$('cFeesV');if(fv&&fv.textContent!=='TBD')fv.textContent='TBD';
+      var b=$('oBar');if(b&&b.style.display!=='none'){b.style.display='none'}
+      var g=$('oLegend');if(g&&g.style.display!=='none'){g.style.display='none'}
+      var cw=$('cWa');if(cw)cw.style.visibility='hidden';
+      HIDES.forEach(function(i){var e=$(i);if(e&&!e.hidden)e.hidden=true});
+      DELTAS.forEach(function(i){var e2=$(i);if(e2)e2.classList.remove('show')});
+    } else if(blankOn){
+      blankOn=false;saved=null;
+      var b=$('oBar');if(b)b.style.display='';var g=$('oLegend');if(g)g.style.display='';
+      var cw=$('cWa');if(cw)cw.style.visibility='';
+      /* do not restore stale text over fresh output: ask the app to recompute instead */
+      var e=$('cFobU');if(e)e.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  }
+  function tick(){blankAll();blankFix()}
+  setInterval(tick,300);tick();
+})();});</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F0EBE5">
@@ -12,7 +160,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <script>
   /* Set by the host. Leads: POST multipart/form-data, field "lead" (JSON) + optional "files", return {"ref":"..."}; non-2xx on failure. */
-  window.PS_LEAD_ENDPOINT = "REPLACE_WITH_LEAD_API_URL";
+  window.PS_LEAD_ENDPOINT = "/api/launch-lead";
   /* Analytics: called as PS_TRACK(eventName, props). Wire to the site's analytics. */
   window.PS_TRACK = function (event, props) { /* REPLACE: send to analytics */ };
 </script>
