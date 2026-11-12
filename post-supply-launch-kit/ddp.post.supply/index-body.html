@@ -509,18 +509,18 @@ html:not(.kbd) .file:focus-within{outline:none}
             <div class="grp-h"><span data-t="grpQuote"></span></div>
             <div class="group">
               <div class="r"><span class="rl"><label for="cProd" data-t="prod"></label></span><span class="rv sel"><select id="cProd"></select><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span></div>
-                            <div class="r "><span class="rl"><label for="cFobU" id="cFobULbl"></label></span><span class="rv"><span class="pre">$</span><input id="cFobU" inputmode="decimal" autocomplete="off" value="10"></span></div>
-              <div class="r "><span class="rl"><label for="cPerCont" id="cPerContLbl"></label></span><span class="rv"><input id="cPerCont" inputmode="decimal" autocomplete="off" value="1000"></span></div>
+                            <div class="r "><span class="rl"><label for="cFobU" id="cFobULbl"></label></span><span class="rv"><span class="pre">$</span><input id="cFobU" inputmode="decimal" autocomplete="off" placeholder="TBD"></span></div>
+              <div class="r "><span class="rl"><label for="cPerCont" id="cPerContLbl"></label></span><span class="rv"><input id="cPerCont" inputmode="decimal" autocomplete="off" placeholder="TBD"></span></div>
               <div class="r"><span class="rl"><label for="cConts" data-t="conts"></label></span><span class="stepper"><button type="button" data-d="-1" aria-label="-1">&minus;</button><input id="cConts" inputmode="numeric" value="1"><button type="button" data-d="1" aria-label="+1">+</button></span></div>
-              <div class="r "><span class="rl"><label for="cFrCont" data-t="frContL"></label><span class="cap" data-t="perCont"></span></span><span class="rv"><span class="pre">$</span><input id="cFrCont" inputmode="decimal" autocomplete="off" value="5000"></span></div>
-              <div class="r "><span class="rl"><label for="cIns" data-t="insRate"></label><span class="cap" data-t="insCap"></span></span><span class="rv"><input id="cIns" inputmode="decimal" autocomplete="off" value="1"><span class="suf">%</span></span></div>
+              <div class="r "><span class="rl"><label for="cFrCont" data-t="frContL"></label><span class="cap" data-t="perCont"></span></span><span class="rv"><span class="pre">$</span><input id="cFrCont" inputmode="decimal" autocomplete="off" placeholder="TBD"></span></div>
+              <div class="r "><span class="rl"><label for="cIns" data-t="insRate"></label><span class="cap" data-t="insCap"></span></span><span class="rv"><input id="cIns" inputmode="decimal" autocomplete="off" placeholder="TBD"><span class="suf">%</span></span></div>
             </div>
 
             <div class="grp-h"><span data-t="grpTax"></span></div>
             <div class="group">
-              <div class="r "><span class="rl"><label for="cDuty" data-t="duty"></label><span class="cap" id="dutyCap"></span></span><span class="rv"><input id="cDuty" inputmode="decimal" autocomplete="off" value="5"><span class="suf">%</span></span></div>
+              <div class="r "><span class="rl"><label for="cDuty" data-t="duty"></label><span class="cap" id="dutyCap"></span></span><span class="rv"><input id="cDuty" inputmode="decimal" autocomplete="off" placeholder="TBD"><span class="suf">%</span></span></div>
               <button type="button" class="r ro tap" id="feesRow" aria-expanded="false"><span class="rl"><span data-t="feesS"></span><span class="cap" id="cFeesInfo"></span><span class="cap detail" id="cFeesDetail" hidden></span></span><span class="rv mono" id="cFeesV"></span></button>
-              <div class="r" id="taxRow"><span class="rl"><label for="cTax" id="cTaxLbl"></label><span class="cap" id="taxCap"></span></span><span class="rv"><input id="cTax" inputmode="decimal" autocomplete="off" value="10.5"><span class="suf">%</span></span></div>
+              <div class="r" id="taxRow"><span class="rl"><label for="cTax" id="cTaxLbl"></label><span class="cap" id="taxCap"></span></span><span class="rv"><input id="cTax" inputmode="decimal" autocomplete="off" placeholder="TBD"><span class="suf">%</span></span></div>
               <label class="r" for="cResell" id="resellRow"><span class="rl"><span data-t="resellT"></span><span class="cap" id="resellCap"></span></span><span class="switch"><input type="checkbox" id="cResell" role="switch"><i></i></span></label>
               <button type="button" class="r link" id="rulesBtn" aria-expanded="false" aria-controls="rulesWrap"><span data-t="rulesBtn"></span><svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
               <div class="rules" id="rulesWrap" hidden>
@@ -531,10 +531,10 @@ html:not(.kbd) .file:focus-within{outline:none}
 
             <div class="grp-h"><span data-t="grpLocal"></span></div>
             <div class="group">
-              <div class="r "><span class="rl"><label for="cBroker" data-t="brokerS"></label><span class="cap" data-t="perShip"></span></span><span class="rv"><span class="pre">$</span><input id="cBroker" inputmode="decimal" autocomplete="off" value="350"></span></div>
-              <div class="r "><span class="rl"><label for="cPort" data-t="portS"></label><span class="cap" data-t="perCont"></span></span><span class="rv"><span class="pre">$</span><input id="cPort" inputmode="decimal" autocomplete="off" value="650"></span></div>
-              <div class="r "><span class="rl"><label for="cInland" data-t="inlandS"></label><span class="cap" data-t="perCont"></span></span><span class="rv"><span class="pre">$</span><input id="cInland" inputmode="decimal" autocomplete="off" value="450"></span></div>
-              <div class="r "><span class="rl"><label for="cOther" data-t="otherS"></label><span class="cap" data-t="perShip"></span></span><span class="rv"><span class="pre">$</span><input id="cOther" inputmode="decimal" autocomplete="off" value="0"></span></div>
+              <div class="r "><span class="rl"><label for="cBroker" data-t="brokerS"></label><span class="cap" data-t="perShip"></span></span><span class="rv"><span class="pre">$</span><input id="cBroker" inputmode="decimal" autocomplete="off" placeholder="TBD"></span></div>
+              <div class="r "><span class="rl"><label for="cPort" data-t="portS"></label><span class="cap" data-t="perCont"></span></span><span class="rv"><span class="pre">$</span><input id="cPort" inputmode="decimal" autocomplete="off" placeholder="TBD"></span></div>
+              <div class="r "><span class="rl"><label for="cInland" data-t="inlandS"></label><span class="cap" data-t="perCont"></span></span><span class="rv"><span class="pre">$</span><input id="cInland" inputmode="decimal" autocomplete="off" placeholder="TBD"></span></div>
+              <div class="r "><span class="rl"><label for="cOther" data-t="otherS"></label><span class="cap" data-t="perShip"></span></span><span class="rv"><span class="pre">$</span><input id="cOther" inputmode="decimal" autocomplete="off" placeholder="TBD"></span></div>
             </div>
 
             <div class="grp-h"><span data-t="grpMargin"></span> <span class="opt" data-t="optional"></span></div>
